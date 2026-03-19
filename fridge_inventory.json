@@ -1,0 +1,22 @@
+[
+  {
+    "id": 1773903442826269,
+    "name": "辣椒粉",
+    "quantity": 1,
+    "category": "调料",
+    "expiry": "2026-03-26",
+    "addedDate": "2026-03-19T14:57:22.826277",
+    "minQuantity": 1,
+    "note": ""
+  },
+  {
+    "id": 1773903364457276,
+    "name": "牛奶",
+    "quantity": 6,
+    "category": "乳制品",
+    "expiry": "2026-03-27",
+    "addedDate": "2026-03-19T14:56:04.457284",
+    "minQuantity": 1,
+    "note": ""
+  }
+]
