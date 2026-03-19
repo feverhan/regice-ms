@@ -1,0 +1,13 @@
+services:
+  fridge-inventory:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fridge-inventory
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-5000}:5000"
+    environment:
+      PORT: 5000
+    volumes:
+      - ./fridge_inventory.json:/app/fridge_inventory.json

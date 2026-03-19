@@ -1,151 +1,202 @@
 # 家庭冰箱库存管理系统
 
-一个基于 Flask 的 Web 应用，用于管理家庭冰箱库存。
+一个基于 Flask 的轻量库存管理工具，支持物品记录、临期提醒、低库存提醒、批量删除、补货建议和数据导出。
 
-## 功能特点
+## 最低门槛部署
 
-- ✅ 添加物品（名称、数量、类别、过期日期）
-- ✅ 删除物品
-- ✅ 编辑物品数量
-- ✅ 智能过期提醒（3天内过期显示警告，已过期显示红色）
-- ✅ 数据持久化（JSON 文件存储）
-- ✅ 响应式设计，支持手机和电脑
-- ✅ 实时统计（物品总数、即将过期、已过期数量）
+### 方案一：Docker Compose，一条命令启动
 
-## 项目结构
+前提：
 
-```
-codebuddyTest/
-├── app.py                  # Flask 应用主文件
-├── templates/
-│   └── index.html         # 前端页面
-├── requirements.txt        # Python 依赖
-├── fridge_inventory.json  # 数据存储文件（自动生成）
-└── README.md              # 说明文档
+- 已安装 [Docker Desktop](https://www.docker.com/products/docker-desktop/) 或 Docker Engine
+- 当前目录就是项目根目录
+
+Windows PowerShell：
+
+```powershell
+.\deploy-compose.ps1
 ```
 
-## 安装步骤
+通用命令：
 
-### 1. 确保已安装 Python
+```bash
+docker compose up -d --build
+```
 
-需要 Python 3.7 或更高版本。
+启动后访问：
 
-### 2. 安装依赖
+```text
+http://localhost:5000
+```
 
-在项目目录下运行：
+停止服务：
+
+```bash
+docker compose down
+```
+
+## 打包镜像
+
+### PowerShell 脚本
+
+```powershell
+.\build-image.ps1
+```
+
+指定镜像名：
+
+```powershell
+.\build-image.ps1 my-fridge-app:1.0.0
+```
+
+### 原生命令
+
+```bash
+docker build -t fridge-inventory:latest .
+```
+
+## 直接运行镜像
+
+如果你不想用 Compose，也可以单独运行容器：
+
+```bash
+docker run -d \
+  --name fridge-inventory \
+  -p 5000:5000 \
+  -v $(pwd)/fridge_inventory.json:/app/fridge_inventory.json \
+  fridge-inventory:latest
+```
+
+Windows PowerShell 示例：
+
+```powershell
+docker run -d `
+  --name fridge-inventory `
+  -p 5000:5000 `
+  -v "${PWD}\fridge_inventory.json:/app/fridge_inventory.json" `
+  fridge-inventory:latest
+```
+
+## Docker Compose 说明
+
+项目已内置 [docker-compose.yml](/D:/codebuddyTest/docker-compose.yml)，默认配置如下：
+
+- 服务名：`fridge-inventory`
+- 容器名：`fridge-inventory`
+- 对外端口：`5000`
+- 数据文件挂载：`./fridge_inventory.json -> /app/fridge_inventory.json`
+- 重启策略：`unless-stopped`
+
+如果要修改端口，可以临时指定：
+
+```bash
+APP_PORT=8080 docker compose up -d --build
+```
+
+PowerShell：
+
+```powershell
+$env:APP_PORT=8080
+docker compose up -d --build
+```
+
+访问地址就变成：
+
+```text
+http://localhost:8080
+```
+
+## 项目内置的部署文件
+
+- [Dockerfile](/D:/codebuddyTest/Dockerfile)：用于构建运行镜像
+- [docker-compose.yml](/D:/codebuddyTest/docker-compose.yml)：用于本地或服务器一键部署
+- [build-image.ps1](/D:/codebuddyTest/build-image.ps1)：Windows 下构建镜像脚本
+- [deploy-compose.ps1](/D:/codebuddyTest/deploy-compose.ps1)：Windows 下 Compose 一键启动脚本
+- [.dockerignore](/D:/codebuddyTest/.dockerignore)：减少构建上下文，加快镜像构建
+
+## 本地开发
+
+### 方式一：Python 直接运行
 
 ```bash
 pip install -r requirements.txt
-```
-
-### 3. 启动服务
-
-```bash
 python app.py
 ```
 
-服务启动后，会看到类似以下的输出：
+访问：
 
-```
-==================================================
-家庭冰箱库存管理系统
-==================================================
-数据文件: d:\codebuddyTest\fridge_inventory.json
-服务器启动在: http://127.0.0.1:5000
-==================================================
+```text
+http://127.0.0.1:5000
 ```
 
-### 4. 访问应用
+### 可选环境变量
 
-在浏览器中打开：http://127.0.0.1:5000
+- `PORT`：服务端口，默认 `5000`
+- `HOST`：监听地址，默认 `0.0.0.0`
+- `FLASK_DEBUG`：是否开启调试模式，默认关闭
 
-## API 接口
+示例：
 
-### 获取所有物品
-```
-GET /api/inventory
-```
-
-### 添加物品
-```
-POST /api/inventory
-Content-Type: application/json
-
-{
-  "name": "牛奶",
-  "quantity": 2,
-  "category": "乳制品",
-  "expiry": "2024-03-20"
-}
+```bash
+FLASK_DEBUG=1 python app.py
 ```
 
-### 删除物品
-```
-DELETE /api/inventory/:id
-```
+## 数据持久化
 
-### 更新物品数量
-```
-PUT /api/inventory/:id
-Content-Type: application/json
+库存数据保存在：
 
-{
-  "quantity": 5
-}
+```text
+fridge_inventory.json
 ```
 
-### 获取统计信息
-```
-GET /api/stats
-```
+Docker Compose 已经把这个文件挂载到容器内，所以：
 
-返回：
-```json
-{
-  "total": 10,
-  "expiringSoon": 2,
-  "expired": 1
-}
-```
+- 重启容器不会丢数据
+- 重建镜像不会丢数据
+- 直接备份这个 JSON 文件即可
 
-## 数据存储
+如果这个文件不存在，`deploy-compose.ps1` 会自动创建一个空文件。
 
-所有数据存储在 `fridge_inventory.json` 文件中，格式如下：
+## 服务器部署建议
 
-```json
-[
-  {
-    "id": 1710844800000000,
-    "name": "牛奶",
-    "quantity": 2,
-    "category": "乳制品",
-    "expiry": "2024-03-20",
-    "addedDate": "2024-03-19T00:00:00.000000"
-  }
-]
+如果部署到云服务器，推荐流程：
+
+1. 安装 Docker 和 Docker Compose。
+2. 上传整个项目目录。
+3. 在项目目录执行 `docker compose up -d --build`。
+4. 放通服务器安全组或防火墙的目标端口，例如 `5000`。
+5. 浏览器访问 `http://服务器IP:5000`。
+
+如果要配域名，建议再加一层 Nginx 或 Traefik 做反向代理。
+
+## 常用运维命令
+
+查看容器状态：
+
+```bash
+docker compose ps
 ```
 
-## 技术栈
+查看日志：
 
-- **后端**: Flask 3.0.0
-- **前端**: HTML5 + CSS3 + JavaScript
-- **数据存储**: JSON 文件
-- **通信**: RESTful API
+```bash
+docker compose logs -f
+```
 
-## 注意事项
+重启服务：
 
-1. 数据文件 `fridge_inventory.json` 会在首次启动时自动创建
-2. 修改 `app.py` 后需要重启服务才能生效
-3. 在开发模式下（debug=True），代码修改会自动重载
-4. 建议定期备份 `fridge_inventory.json` 文件
+```bash
+docker compose restart
+```
 
-## 常见问题
+重新构建并启动：
 
-**Q: 如何修改端口号？**
-A: 修改 `app.py` 最后一行的 `port=5000` 为你想要的端口号。
+```bash
+docker compose up -d --build
+```
 
-**Q: 如何在局域网内访问？**
-A: 确保防火墙允许 5000 端口，然后在其他设备上访问 `http://[你的IP地址]:5000`。
+删除容器但保留数据文件：
 
-**Q: 数据丢失了怎么办？**
-A: 检查 `fridge_inventory.json` 文件是否存在，如果误删除可以恢复备份。
+```bash
+docker compose down
+```
