@@ -4,23 +4,19 @@
 
 ## 最低门槛部署
 
-### 方案一：Docker Compose，一条命令启动
+### 方案一：Podman 一键启动
+
+如果你本机已经有 `podman`，这是最低门槛方案。
 
 前提：
 
-- 已安装 [Docker Desktop](https://www.docker.com/products/docker-desktop/) 或 Docker Engine
+- 已安装 Podman
 - 当前目录就是项目根目录
 
 Windows PowerShell：
 
 ```powershell
-.\deploy-compose.ps1
-```
-
-通用命令：
-
-```bash
-docker compose up -d --build
+.\deploy-podman.ps1
 ```
 
 启动后访问：
@@ -31,55 +27,78 @@ http://localhost:5000
 
 停止服务：
 
+```powershell
+podman stop fridge-inventory
+podman rm -f fridge-inventory
+```
+
+### 方案二：Podman Compose
+
+如果你的 Podman 环境支持 `podman compose`，也可以直接用现成的 compose 文件：
+
+```powershell
+podman compose up -d --build
+```
+
+或：
+
 ```bash
-docker compose down
+podman-compose up -d --build
 ```
 
 ## 打包镜像
 
-### PowerShell 脚本
+### Podman PowerShell 脚本
 
 ```powershell
-.\build-image.ps1
+.\build-image-podman.ps1
 ```
 
 指定镜像名：
 
 ```powershell
-.\build-image.ps1 my-fridge-app:1.0.0
+.\build-image-podman.ps1 my-fridge-app:1.0.0
 ```
 
-### 原生命令
+### Podman 原生命令
 
 ```bash
-docker build -t fridge-inventory:latest .
+podman build -t fridge-inventory:latest .
 ```
 
 ## 直接运行镜像
 
-如果你不想用 Compose，也可以单独运行容器：
+如果你不想用 compose，也可以直接用 `podman run`：
 
 ```bash
-docker run -d \
+podman run -d \
   --name fridge-inventory \
   -p 5000:5000 \
   -v $(pwd)/fridge_inventory.json:/app/fridge_inventory.json \
+  --restart unless-stopped \
   fridge-inventory:latest
 ```
 
 Windows PowerShell 示例：
 
 ```powershell
-docker run -d `
+podman run -d `
   --name fridge-inventory `
   -p 5000:5000 `
   -v "${PWD}\fridge_inventory.json:/app/fridge_inventory.json" `
+  --restart unless-stopped `
   fridge-inventory:latest
 ```
 
-## Docker Compose 说明
+## Compose 说明
 
-项目已内置 [docker-compose.yml](/D:/codebuddyTest/docker-compose.yml)，默认配置如下：
+项目已内置 [docker-compose.yml](/D:/codebuddyTest/docker-compose.yml)，可用于：
+
+- `podman compose`
+- `podman-compose`
+- `docker compose`
+
+默认配置如下：
 
 - 服务名：`fridge-inventory`
 - 容器名：`fridge-inventory`
@@ -89,15 +108,9 @@ docker run -d `
 
 如果要修改端口，可以临时指定：
 
-```bash
-APP_PORT=8080 docker compose up -d --build
-```
-
-PowerShell：
-
 ```powershell
 $env:APP_PORT=8080
-docker compose up -d --build
+podman compose up -d --build
 ```
 
 访问地址就变成：
@@ -110,6 +123,8 @@ http://localhost:8080
 
 - [Dockerfile](/D:/codebuddyTest/Dockerfile)：用于构建运行镜像
 - [docker-compose.yml](/D:/codebuddyTest/docker-compose.yml)：用于本地或服务器一键部署
+- [build-image-podman.ps1](/D:/codebuddyTest/build-image-podman.ps1)：Windows 下 Podman 构建镜像脚本
+- [deploy-podman.ps1](/D:/codebuddyTest/deploy-podman.ps1)：Windows 下 Podman 一键启动脚本
 - [build-image.ps1](/D:/codebuddyTest/build-image.ps1)：Windows 下构建镜像脚本
 - [deploy-compose.ps1](/D:/codebuddyTest/deploy-compose.ps1)：Windows 下 Compose 一键启动脚本
 - [.dockerignore](/D:/codebuddyTest/.dockerignore)：减少构建上下文，加快镜像构建
@@ -149,21 +164,21 @@ FLASK_DEBUG=1 python app.py
 fridge_inventory.json
 ```
 
-Docker Compose 已经把这个文件挂载到容器内，所以：
+Podman 脚本和 compose 方案都会把这个文件挂载到容器内，所以：
 
 - 重启容器不会丢数据
 - 重建镜像不会丢数据
 - 直接备份这个 JSON 文件即可
 
-如果这个文件不存在，`deploy-compose.ps1` 会自动创建一个空文件。
+如果这个文件不存在，`deploy-podman.ps1` 和 `deploy-compose.ps1` 都会自动创建一个空文件。
 
 ## 服务器部署建议
 
 如果部署到云服务器，推荐流程：
 
-1. 安装 Docker 和 Docker Compose。
+1. 安装 Podman。
 2. 上传整个项目目录。
-3. 在项目目录执行 `docker compose up -d --build`。
+3. 在项目目录执行 `.\deploy-podman.ps1` 或 `podman run` / `podman compose up -d --build`。
 4. 放通服务器安全组或防火墙的目标端口，例如 `5000`。
 5. 浏览器访问 `http://服务器IP:5000`。
 
@@ -174,29 +189,29 @@ Docker Compose 已经把这个文件挂载到容器内，所以：
 查看容器状态：
 
 ```bash
-docker compose ps
+podman ps
 ```
 
 查看日志：
 
 ```bash
-docker compose logs -f
+podman logs -f fridge-inventory
 ```
 
 重启服务：
 
 ```bash
-docker compose restart
+podman restart fridge-inventory
 ```
 
 重新构建并启动：
 
-```bash
-docker compose up -d --build
+```powershell
+.\deploy-podman.ps1
 ```
 
 删除容器但保留数据文件：
 
 ```bash
-docker compose down
+podman rm -f fridge-inventory
 ```

@@ -4,194 +4,371 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>家庭冰箱库存管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        :root { --bg:#f4efe7; --panel:#fffdf8; --panel-strong:#f7f1e7; --text:#1f2933; --muted:#6b7280; --accent:#0f766e; --accent-strong:#115e59; --danger:#c2410c; --warning:#d97706; --border:#eadfce; --shadow:0 16px 40px rgba(56,44,22,.08); }
-        * { box-sizing:border-box; margin:0; padding:0; }
-        body { font-family:"Microsoft YaHei","PingFang SC",sans-serif; background:radial-gradient(circle at top right, rgba(15,118,110,.12), transparent 28%), linear-gradient(180deg, #faf7f2 0%, var(--bg) 100%); color:var(--text); min-height:100vh; padding:24px; }
-        .container { max-width:1320px; margin:0 auto; }
-        .hero { margin-bottom:16px; }
-        .panel { background:var(--panel); border:1px solid var(--border); border-radius:24px; box-shadow:var(--shadow); }
-        .hero-main { padding:24px 26px; background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(250,247,242,.98)); position:relative; overflow:hidden; }
-        .hero-main::after { content:""; position:absolute; width:220px; height:220px; border-radius:50%; right:-70px; top:-80px; background:radial-gradient(circle, rgba(15,118,110,.16), transparent 65%); pointer-events:none; }
-        .eyebrow { display:inline-flex; align-items:center; gap:8px; background:rgba(15,118,110,.08); color:var(--accent-strong); padding:8px 14px; border-radius:999px; font-size:13px; margin-bottom:14px; }
-        .hero-grid { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:18px; align-items:center; position:relative; z-index:1; }
-        .hero-copy h1 { font-size:32px; line-height:1.12; margin-bottom:8px; letter-spacing:-.02em; }
-        .hero-copy p { color:var(--muted); line-height:1.6; max-width:560px; }
-        .hero-actions { display:flex; gap:12px; flex-wrap:wrap; justify-content:flex-end; }
-        .btn { border:none; border-radius:14px; padding:12px 18px; font-size:14px; font-weight:600; cursor:pointer; transition:transform .18s ease, box-shadow .18s ease, background .18s ease; }
-        .btn:hover { transform:translateY(-1px); }
-        .btn-primary { background:var(--accent); color:#fff; box-shadow:0 10px 24px rgba(15,118,110,.2); }
-        .btn-primary:hover { background:var(--accent-strong); }
-        .btn-secondary { background:#efe7d8; color:var(--text); }
-        .btn-danger { background:#fff0e7; color:var(--danger); }
-        .toolbar { display:grid; grid-template-columns:1.4fr repeat(3, minmax(120px,180px)); gap:12px; padding:18px; margin-bottom:20px; }
-        .toolbar input, .toolbar select, .form-group input, .form-group select, .form-group textarea { width:100%; border:1px solid var(--border); background:#fff; border-radius:14px; padding:13px 14px; font-size:14px; color:var(--text); }
-        .toolbar input:focus, .toolbar select:focus, .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:var(--accent); box-shadow:0 0 0 4px rgba(15,118,110,.12); }
-        .dashboard { display:grid; grid-template-columns:minmax(0,1fr) 260px; gap:20px; align-items:start; }
-        .content-stack { display:grid; gap:16px; }
-        .list-panel { padding:18px; }
-        .list-panel-header, .shopping-header { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:14px; }
-        .panel-title h2 { font-size:24px; margin-bottom:4px; }
-        .panel-title p { color:var(--muted); font-size:13px; }
-        .list-shell { display:grid; gap:14px; }
-        .stats { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
-        .stat-card { min-height:96px; padding:16px 18px; border-radius:18px; background:#fcfaf6; border:1px solid var(--border); display:flex; flex-direction:column; justify-content:space-between; }
-        .stat-card p { color:var(--muted); font-size:12px; margin-bottom:8px; }
-        .stat-card h3 { font-size:26px; }
-        .stat-card.warning h3 { color:var(--warning); }
-        .stat-card.success h3 { color:var(--accent); }
-        .batch-bar, .category-row, .shopping-panel { padding:16px; }
-        .batch-bar { display:none; justify-content:space-between; align-items:center; gap:12px; background:#fff5ef; }
-        .batch-bar.active { display:flex; }
-        .batch-actions, .category-row { display:flex; gap:10px; flex-wrap:wrap; }
-        .chip { padding:8px 14px; border-radius:999px; background:var(--panel-strong); color:var(--text); border:1px solid var(--border); font-size:13px; }
-        .chip span { color:var(--accent-strong); font-weight:700; margin-left:6px; }
-        .item-list { display:grid; grid-template-columns:repeat(auto-fill, minmax(290px,1fr)); gap:14px; }
-        .item-card { position:relative; padding:18px; border-radius:20px; border:1px solid var(--border); background:linear-gradient(180deg, #fffefb, #fff9f1); }
-        .item-card.warning { border-color:rgba(217,119,6,.45); }
-        .item-card.expired { border-color:rgba(194,65,12,.5); background:linear-gradient(180deg, #fff8f4, #fff1eb); }
-        .item-card.low-stock { box-shadow:inset 0 0 0 1px rgba(15,118,110,.18); }
-        .item-checkbox { position:absolute; top:16px; left:16px; width:18px; height:18px; accent-color:var(--accent); }
-        .item-top { padding-left:28px; display:flex; justify-content:space-between; gap:12px; margin-bottom:12px; }
-        .item-name { font-size:18px; font-weight:700; }
-        .badge-stack { display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end; }
-        .badge { border-radius:999px; padding:5px 10px; font-size:12px; font-weight:700; }
-        .badge-category { background:#e8f5f3; color:var(--accent-strong); }
-        .badge-warning { background:#fff1d6; color:#9a6700; }
-        .badge-danger { background:#ffe2d5; color:var(--danger); }
-        .badge-low { background:#e6f6f4; color:var(--accent-strong); }
-        .item-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; padding-left:28px; margin-bottom:14px; }
-        .meta { display:grid; gap:4px; }
-        .meta span:first-child { color:var(--muted); font-size:12px; }
-        .meta strong { font-size:14px; }
-        .item-note { padding-left:28px; margin-bottom:14px; color:var(--muted); font-size:13px; line-height:1.6; min-height:20px; }
-        .item-actions { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; padding-left:28px; }
-        .btn-small { border:none; border-radius:12px; padding:10px 12px; font-size:13px; font-weight:700; cursor:pointer; background:#efe7d8; color:var(--text); }
-        .btn-small.danger { background:#fff0e7; color:var(--danger); }
-        .btn-small.success { background:#e8f5f3; color:var(--accent-strong); }
-        .empty-state { text-align:center; color:var(--muted); padding:56px 20px; }
-        .empty-state h3 { color:var(--text); margin-bottom:8px; }
-        .shopping-panel { position:sticky; top:24px; background:#fcfaf6; }
-        .shopping-header .panel-title h2 { font-size:18px; }
-        .shopping-list { display:grid; gap:10px; }
-        .shopping-item { padding:12px 14px; border-radius:16px; border:1px solid var(--border); background:#fffaf2; }
-        .shopping-item strong { display:block; margin-bottom:6px; }
-        .shopping-item span { display:block; color:var(--muted); font-size:13px; line-height:1.6; }
-        .modal-overlay { position:fixed; inset:0; background:rgba(23,23,23,.35); display:none; align-items:center; justify-content:center; padding:16px; z-index:20; }
-        .modal-overlay.active { display:flex; }
-        .modal { width:min(560px,100%); background:var(--panel); border-radius:24px; border:1px solid var(--border); box-shadow:0 24px 60px rgba(31,41,51,.18); padding:24px; }
-        .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:18px; }
-        .modal-header h2 { font-size:22px; }
-        .close-btn { border:none; background:transparent; font-size:24px; cursor:pointer; color:var(--muted); }
-        .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
-        .form-group { display:grid; gap:8px; margin-bottom:14px; }
-        .form-group.full { grid-column:1 / -1; }
-        .form-group label { font-size:13px; font-weight:700; }
-        .form-group textarea { resize:vertical; min-height:88px; }
-        .modal-actions { display:flex; justify-content:flex-end; gap:10px; margin-top:10px; }
-        @media (max-width:1024px) { .hero-grid, .dashboard { grid-template-columns:1fr; } .shopping-panel { position:static; } }
-        @media (max-width:720px) { body { padding:16px; } .toolbar, .form-grid, .stats, .item-grid, .item-actions { grid-template-columns:1fr; } .hero-copy h1 { font-size:28px; } .hero-actions { justify-content:flex-start; } }
+        :root {
+            --page-bg: #f6f7fb;
+            --panel-bg: #ffffff;
+            --line: #e9edf5;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --accent: #0d6efd;
+            --soft: #f8fafc;
+        }
+
+        body {
+            background: linear-gradient(180deg, #f8f9fc 0%, #f2f4f8 100%);
+            color: var(--text-main);
+        }
+
+        .page-shell {
+            max-width: 1280px;
+        }
+
+        .app-hero {
+            background: linear-gradient(135deg, #ffffff 0%, #f7faff 100%);
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            box-shadow: 0 10px 30px rgba(31, 41, 55, 0.06);
+        }
+
+        .hero-chip {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.4rem 0.8rem;
+            border-radius: 999px;
+            background: #eef4ff;
+            color: #3158c9;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .hero-actions .btn {
+            min-width: 120px;
+        }
+
+        .toolbar-card,
+        .section-card,
+        .side-card {
+            background: var(--panel-bg);
+            border: 1px solid var(--line);
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.04);
+        }
+
+        .toolbar-card .form-control,
+        .toolbar-card .form-select,
+        .modal .form-control,
+        .modal .form-select {
+            border-radius: 12px;
+            border-color: #dbe2ec;
+            min-height: 46px;
+        }
+
+        .toolbar-card .form-control:focus,
+        .toolbar-card .form-select:focus,
+        .modal .form-control:focus,
+        .modal .form-select:focus,
+        .modal textarea:focus {
+            border-color: #86b7fe;
+            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
+        }
+
+        .stat-tile {
+            background: var(--soft);
+            border: 1px solid var(--line);
+            border-radius: 16px;
+            min-height: 104px;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        .stat-value {
+            font-size: 1.9rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .category-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.55rem 0.85rem;
+            border-radius: 999px;
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            font-size: 0.85rem;
+        }
+
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .inventory-card {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 1rem;
+            min-height: 100%;
+        }
+
+        .inventory-card.warning {
+            border-color: #ffe69c;
+            background: #fffdf6;
+        }
+
+        .inventory-card.expired {
+            border-color: #f5c2c7;
+            background: #fff8f8;
+        }
+
+        .inventory-card.low-stock {
+            box-shadow: inset 0 0 0 1px rgba(13, 110, 253, 0.08);
+        }
+
+        .inventory-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+        }
+
+        .meta-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.75rem;
+        }
+
+        .meta-box {
+            background: #f8fafc;
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 0.75rem;
+        }
+
+        .meta-label {
+            display: block;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-value {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .item-note {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            min-height: 44px;
+        }
+
+        .shopping-item {
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            background: #f8fafc;
+        }
+
+        .empty-box {
+            border: 1px dashed #d5dce7;
+            border-radius: 18px;
+            background: #fafbfd;
+        }
+
+        @media (max-width: 991.98px) {
+            .side-card {
+                position: static !important;
+            }
+        }
+
+        @media (max-width: 767.98px) {
+            .meta-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .hero-actions .btn {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <section class="hero">
-            <div class="panel hero-main">
-                <div class="eyebrow">冰箱管理台</div>
-                <div class="hero-grid">
-                    <div class="hero-copy">
-                        <h1>家庭库存总览</h1>
-                        <p>简洁管理库存、查看临期情况，并在同一页完成常用操作。</p>
+    <div class="container-fluid py-4">
+        <div class="page-shell mx-auto">
+            <section class="app-hero p-4 p-lg-5 mb-4">
+                <div class="row g-4 align-items-center">
+                    <div class="col-lg-8">
+                        <div class="hero-chip mb-3">冰箱管理台</div>
+                        <h1 class="h2 fw-bold mb-2">冰箱库存</h1>
+                        <p class="text-secondary mb-0">记录食材数量、查看临期情况，常用操作都可以直接在这里完成。</p>
                     </div>
-                    <div class="hero-actions">
-                        <button class="btn btn-primary" onclick="openModal()">新增物品</button>
-                        <button class="btn btn-secondary" onclick="exportData()">导出数据</button>
-                        <button class="btn btn-danger" onclick="clearExpired()">清理过期</button>
+                    <div class="col-lg-4">
+                        <div class="hero-actions d-flex flex-column flex-sm-row flex-lg-column gap-2">
+                            <button class="btn btn-primary" onclick="openModal()">新增食材</button>
+                            <button class="btn btn-outline-secondary" onclick="exportData()">导出数据</button>
+                            <button class="btn btn-outline-danger" onclick="clearExpired()">清理过期</button>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="panel toolbar">
-            <input id="searchInput" type="text" placeholder="搜索名称、分类或备注" oninput="renderPage()">
-            <select id="categoryFilter" onchange="renderPage()">
-                <option value="">全部分类</option><option value="蔬菜">蔬菜</option><option value="水果">水果</option><option value="肉类">肉类</option><option value="海鲜">海鲜</option><option value="乳制品">乳制品</option><option value="饮料">饮料</option><option value="调料">调料</option><option value="主食">主食</option><option value="速食">速食</option><option value="其他">其他</option>
-            </select>
-            <select id="statusFilter" onchange="renderPage()">
-                <option value="">全部状态</option><option value="expired">已过期</option><option value="warning">即将过期</option><option value="low">低库存</option><option value="normal">正常</option>
-            </select>
-            <select id="sortBy" onchange="loadInventory()">
-                <option value="recent">按最近添加</option><option value="status">按状态优先</option><option value="expiry">按过期时间</option><option value="quantity_desc">按数量从高到低</option><option value="quantity_asc">按数量从低到高</option><option value="name">按名称</option><option value="category">按分类</option>
-            </select>
-        </section>
-
-        <section class="dashboard">
-            <div class="content-stack">
-                <div class="panel list-panel">
-                    <div class="list-panel-header">
-                        <div class="panel-title">
-                            <h2>库存列表</h2>
-                            <p>这里是主工作区，优先展示库存本身。</p>
-                        </div>
+            <section class="toolbar-card p-3 mb-4">
+                <div class="row g-2">
+                    <div class="col-lg-5">
+                        <input id="searchInput" type="text" class="form-control" placeholder="搜索食材名称、分类或备注" oninput="renderPage()">
                     </div>
-                    <div class="list-shell">
-                        <div class="stats">
-                            <div class="stat-card"><p>已记录物品</p><h3 id="itemCount">0</h3></div>
-                            <div class="stat-card warning"><p>即将过期</p><h3 id="expiringSoon">0</h3></div>
-                        </div>
-                        <div class="panel batch-bar" id="batchBar">
-                            <div>已选择 <strong id="selectedCount">0</strong> 项</div>
-                            <div class="batch-actions">
-                                <button class="btn btn-secondary" onclick="toggleSelectAll()">全选 / 取消</button>
-                                <button class="btn btn-danger" onclick="batchDelete()">删除选中</button>
+                    <div class="col-sm-4 col-lg-2">
+                        <select id="categoryFilter" class="form-select" onchange="renderPage()">
+                            <option value="">全部分类</option>
+                            <option value="蔬菜">蔬菜</option>
+                            <option value="水果">水果</option>
+                            <option value="肉类">肉类</option>
+                            <option value="海鲜">海鲜</option>
+                            <option value="乳制品">乳制品</option>
+                            <option value="饮料">饮料</option>
+                            <option value="调料">调料</option>
+                            <option value="主食">主食</option>
+                            <option value="速食">速食</option>
+                            <option value="其他">其他</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4 col-lg-2">
+                        <select id="statusFilter" class="form-select" onchange="renderPage()">
+                            <option value="">全部状态</option>
+                            <option value="expired">已过期</option>
+                            <option value="warning">即将过期</option>
+                            <option value="low">低库存</option>
+                            <option value="normal">正常</option>
+                        </select>
+                    </div>
+                    <div class="col-sm-4 col-lg-3">
+                        <select id="sortBy" class="form-select" onchange="loadInventory()">
+                            <option value="recent">按最近添加</option>
+                            <option value="status">按状态优先</option>
+                            <option value="expiry">按过期时间</option>
+                            <option value="quantity_desc">按数量从高到低</option>
+                            <option value="quantity_asc">按数量从低到高</option>
+                            <option value="name">按名称</option>
+                            <option value="category">按分类</option>
+                        </select>
+                    </div>
+                </div>
+            </section>
+
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-9">
+                    <section class="section-card p-3 p-lg-4">
+                        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3">
+                            <div>
+                                <h2 class="h4 mb-1">库存列表</h2>
+                                <p class="text-secondary mb-0">当前冰箱里的食材都在这里。</p>
                             </div>
                         </div>
-                        <div class="panel category-row" id="categoryStats"></div>
-                        <div id="itemList" class="item-list"></div>
-                    </div>
-                </div>
-            </div>
-            <aside class="panel shopping-panel">
-                <div class="shopping-header">
-                    <div class="panel-title">
-                        <h2>补货建议</h2>
-                        <p>辅助信息，不抢主区域。</p>
-                    </div>
-                </div>
-                <div id="shoppingList" class="shopping-list"></div>
-            </aside>
-        </section>
-    </div>
 
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="modal">
-            <div class="modal-header">
-                <h2 id="modalTitle">新增物品</h2>
-                <button class="close-btn" onclick="closeModal()">×</button>
+                        <div class="row g-3 mb-3">
+                            <div class="col-sm-6">
+                                <div class="stat-tile p-3">
+                                    <div class="stat-label">已记录食材</div>
+                                    <div class="stat-value" id="itemCount">0</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-6">
+                                <div class="stat-tile p-3">
+                                    <div class="stat-label">即将过期</div>
+                                    <div class="stat-value text-warning" id="expiringSoon">0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="categoryStats" class="d-flex flex-wrap gap-2 mb-3"></div>
+
+                        <div id="itemList" class="inventory-grid"></div>
+                    </section>
+                </div>
+
+                <div class="col-lg-3">
+                    <aside class="side-card p-3 p-lg-4 position-sticky" style="top: 24px;">
+                        <div class="mb-3">
+                            <h2 class="h5 mb-1">补货建议</h2>
+                            <p class="text-secondary mb-0">低于提醒值的食材会显示在这里。</p>
+                        </div>
+                        <div id="shoppingList" class="d-grid gap-2"></div>
+                    </aside>
+                </div>
             </div>
-            <form id="itemForm" onsubmit="handleSubmit(event)">
-                <input type="hidden" id="editItemId">
-                <div class="form-grid">
-                    <div class="form-group"><label for="itemName">物品名称</label><input id="itemName" type="text" required placeholder="例如：牛奶"></div>
-                    <div class="form-group"><label for="itemQuantity">当前数量</label><input id="itemQuantity" type="number" min="0" required value="1"></div>
-                    <div class="form-group"><label for="itemCategory">分类</label><select id="itemCategory"><option value="蔬菜">蔬菜</option><option value="水果">水果</option><option value="肉类">肉类</option><option value="海鲜">海鲜</option><option value="乳制品">乳制品</option><option value="饮料">饮料</option><option value="调料">调料</option><option value="主食">主食</option><option value="速食">速食</option><option value="其他" selected>其他</option></select></div>
-                    <div class="form-group"><label for="itemExpiry">过期日期</label><input id="itemExpiry" type="date"></div>
-                    <div class="form-group"><label for="itemMinQuantity">提醒阈值</label><input id="itemMinQuantity" type="number" min="1" required value="1"></div>
-                    <div class="form-group"><label for="itemQuickNote">简短备注</label><input id="itemQuickNote" type="text" placeholder="例如：早餐常用"></div>
-                    <div class="form-group full"><label for="itemNote">详细备注</label><textarea id="itemNote" placeholder="可记录品牌、存放位置、购买时间等信息"></textarea></div>
-                </div>
-                <div class="modal-actions">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                    <button type="submit" class="btn btn-primary" id="submitBtn">保存</button>
-                </div>
-            </form>
         </div>
     </div>
 
+    <div class="modal fade" id="itemModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 rounded-4 shadow">
+                <div class="modal-header border-0 pb-0">
+                    <h2 id="modalTitle" class="modal-title fs-4">新增食材</h2>
+                    <button type="button" class="btn-close" aria-label="Close" onclick="closeModal()"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <form id="itemForm" onsubmit="handleSubmit(event)">
+                        <input type="hidden" id="editItemId">
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label for="itemName" class="form-label">食材名称</label>
+                                <input id="itemName" type="text" class="form-control" required placeholder="例如：牛奶">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="itemQuantity" class="form-label">当前数量</label>
+                                <input id="itemQuantity" type="number" class="form-control" min="0" required value="1">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="itemCategory" class="form-label">分类</label>
+                                <select id="itemCategory" class="form-select">
+                                    <option value="蔬菜">蔬菜</option>
+                                    <option value="水果">水果</option>
+                                    <option value="肉类">肉类</option>
+                                    <option value="海鲜">海鲜</option>
+                                    <option value="乳制品">乳制品</option>
+                                    <option value="饮料">饮料</option>
+                                    <option value="调料">调料</option>
+                                    <option value="主食">主食</option>
+                                    <option value="速食">速食</option>
+                                    <option value="其他" selected>其他</option>
+                                </select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="itemExpiry" class="form-label">过期日期</label>
+                                <input id="itemExpiry" type="date" class="form-control">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="itemMinQuantity" class="form-label">提醒值</label>
+                                <input id="itemMinQuantity" type="number" class="form-control" min="1" required value="1">
+                            </div>
+                            <div class="col-sm-6">
+                                <label for="itemQuickNote" class="form-label">简短备注</label>
+                                <input id="itemQuickNote" type="text" class="form-control" placeholder="例如：早餐常用">
+                            </div>
+                            <div class="col-12">
+                                <label for="itemNote" class="form-label">详细备注</label>
+                                <textarea id="itemNote" class="form-control" rows="4" placeholder="可记录品牌、存放位置、购买时间等信息"></textarea>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button type="button" class="btn btn-light border" onclick="closeModal()">取消</button>
+                            <button type="submit" class="btn btn-primary" id="submitBtn">保存</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let inventory = [];
         let stats = { total: 0, itemCount: 0, expiringSoon: 0, expired: 0, lowStock: 0, categories: {}, shoppingList: [] };
-        const selectedItems = new Set();
+        let itemModal;
 
         async function loadInventory() {
             try {
@@ -202,7 +379,7 @@
                 renderPage();
             } catch (error) {
                 console.error('加载库存失败:', error);
-                alert('加载库存失败，请检查服务是否正常运行。');
+                alert('加载失败，请检查服务是否正常运行。');
             }
         }
 
@@ -220,11 +397,13 @@
                 const note = (item.note || '').toLowerCase();
                 const matchesSearch = !searchTerm || item.name.toLowerCase().includes(searchTerm) || item.category.toLowerCase().includes(searchTerm) || note.includes(searchTerm);
                 const matchesCategory = !category || item.category === category;
+
                 let matchesStatus = true;
                 if (status === 'expired') matchesStatus = item.isExpired;
                 else if (status === 'warning') matchesStatus = item.isExpiringSoon && !item.isExpired;
                 else if (status === 'low') matchesStatus = item.isLowStock;
                 else if (status === 'normal') matchesStatus = !item.isExpired && !item.isExpiringSoon && !item.isLowStock;
+
                 return matchesSearch && matchesCategory && matchesStatus;
             });
         }
@@ -233,7 +412,6 @@
             renderStats();
             renderCategoryStats();
             renderShoppingList();
-            renderBatchBar();
             renderInventory(getFilteredItems());
         }
 
@@ -245,60 +423,103 @@
         function renderCategoryStats() {
             const container = document.getElementById('categoryStats');
             const entries = Object.entries(stats.categories || {}).sort((a, b) => b[1] - a[1]);
-            container.innerHTML = entries.length ? entries.map(([name, count]) => `<div class="chip">${escapeHtml(name)}<span>${count}</span></div>`).join('') : '<div class="chip">暂无分类统计</div>';
+
+            container.innerHTML = entries.length
+                ? entries.map(([name, count]) => `<div class="category-chip">${escapeHtml(name)}<strong>${count}</strong></div>`).join('')
+                : '<div class="category-chip">暂无分类统计</div>';
         }
 
         function renderShoppingList() {
             const container = document.getElementById('shoppingList');
             const list = stats.shoppingList || [];
-            container.innerHTML = list.length ? list.map((item) => `
-                <div class="shopping-item">
-                    <strong>${escapeHtml(item.name)}</strong>
-                    <span>当前库存 ${item.quantity}，提醒阈值 ${item.minQuantity}</span>
-                    <span>建议至少补 ${Math.max(item.gap, 1)}，分类：${escapeHtml(item.category)}</span>
-                </div>
-            `).join('') : `<div class="empty-state"><h3>暂时没有补货项</h3><p>当物品数量低于提醒阈值时，会自动生成建议。</p></div>`;
-        }
 
-        function renderBatchBar() {
-            const batchBar = document.getElementById('batchBar');
-            document.getElementById('selectedCount').textContent = selectedItems.size;
-            batchBar.classList.toggle('active', selectedItems.size > 0);
+            container.innerHTML = list.length
+                ? list.map((item) => `
+                    <div class="shopping-item p-3">
+                        <div class="fw-semibold mb-1">${escapeHtml(item.name)}</div>
+                        <div class="text-secondary small">当前 ${item.quantity}，提醒值 ${item.minQuantity}</div>
+                        <div class="text-secondary small">建议补 ${Math.max(item.gap, 1)}，分类：${escapeHtml(item.category)}</div>
+                    </div>
+                `).join('')
+                : `
+                    <div class="empty-box text-center p-4">
+                        <div class="fw-semibold mb-1">暂时不需要补货</div>
+                        <div class="text-secondary small">数量低于提醒值的食材会自动出现在这里。</div>
+                    </div>
+                `;
         }
 
         function renderInventory(items) {
             const container = document.getElementById('itemList');
+
             if (!items.length) {
-                container.innerHTML = `<div class="panel empty-state" style="grid-column:1 / -1;"><h3>没有匹配的物品</h3><p>可以调整筛选条件，或者新增一条库存记录。</p></div>`;
+                container.innerHTML = `
+                    <div class="empty-box text-center p-5" style="grid-column: 1 / -1;">
+                        <div class="fw-semibold mb-1">没有找到相关食材</div>
+                        <div class="text-secondary small">试试调整筛选条件，或者新增一条记录。</div>
+                    </div>
+                `;
                 return;
             }
 
             container.innerHTML = items.map((item) => {
-                const badges = [`<span class="badge badge-category">${escapeHtml(item.category)}</span>`];
-                const cardClasses = ['item-card'];
-                if (item.isExpired) { badges.push('<span class="badge badge-danger">已过期</span>'); cardClasses.push('expired'); }
-                else if (item.isExpiringSoon) { badges.push('<span class="badge badge-warning">即将过期</span>'); cardClasses.push('warning'); }
-                if (item.isLowStock) { badges.push('<span class="badge badge-low">低库存</span>'); cardClasses.push('low-stock'); }
+                const badges = [`<span class="badge text-bg-light border">${escapeHtml(item.category)}</span>`];
+                const cardClasses = ['inventory-card'];
+
+                if (item.isExpired) {
+                    badges.push('<span class="badge text-bg-danger">已过期</span>');
+                    cardClasses.push('expired');
+                } else if (item.isExpiringSoon) {
+                    badges.push('<span class="badge text-bg-warning">即将过期</span>');
+                    cardClasses.push('warning');
+                }
+
+                if (item.isLowStock) {
+                    badges.push('<span class="badge text-bg-primary">低库存</span>');
+                    cardClasses.push('low-stock');
+                }
 
                 return `
-                    <article class="${cardClasses.join(' ')}">
-                        <input class="item-checkbox" type="checkbox" ${selectedItems.has(item.id) ? 'checked' : ''} onchange="toggleSelect(${item.id})">
-                        <div class="item-top">
-                            <div class="item-name">${escapeHtml(item.name)}</div>
-                            <div class="badge-stack">${badges.join('')}</div>
+                    <article class="${cardClasses.join(' ')} d-flex flex-column gap-3">
+                        <div class="d-flex justify-content-between align-items-start gap-3">
+                            <div class="inventory-title">${escapeHtml(item.name)}</div>
+                            <div class="d-flex flex-wrap gap-1 justify-content-end">${badges.join('')}</div>
                         </div>
-                        <div class="item-grid">
-                            <div class="meta"><span>当前数量</span><strong>${item.quantity}</strong></div>
-                            <div class="meta"><span>提醒阈值</span><strong>${item.minQuantity}</strong></div>
-                            <div class="meta"><span>过期日期</span><strong>${formatExpiry(item)}</strong></div>
-                            <div class="meta"><span>库存状态</span><strong>${getStatusText(item)}</strong></div>
+
+                        <div class="meta-grid">
+                            <div class="meta-box">
+                                <span class="meta-label">当前数量</span>
+                                <div class="meta-value">${item.quantity}</div>
+                            </div>
+                            <div class="meta-box">
+                                <span class="meta-label">提醒值</span>
+                                <div class="meta-value">${item.minQuantity}</div>
+                            </div>
+                            <div class="meta-box">
+                                <span class="meta-label">过期日期</span>
+                                <div class="meta-value">${formatExpiry(item)}</div>
+                            </div>
+                            <div class="meta-box">
+                                <span class="meta-label">库存状态</span>
+                                <div class="meta-value">${getStatusText(item)}</div>
+                            </div>
                         </div>
+
                         <div class="item-note">${escapeHtml(item.note || '无备注')}</div>
-                        <div class="item-actions">
-                            <button class="btn-small success" onclick="adjustQuantity(${item.id}, -1)">消耗 1</button>
-                            <button class="btn-small success" onclick="adjustQuantity(${item.id}, 1)">补货 1</button>
-                            <button class="btn-small" onclick="openEditModal(${item.id})">编辑</button>
-                            <button class="btn-small danger" onclick="deleteItem(${item.id})">删除</button>
+
+                        <div class="row g-2 mt-auto">
+                            <div class="col-6">
+                                <button class="btn btn-sm btn-outline-primary w-100" onclick="adjustQuantity(${item.id}, -1)">消耗 1</button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-sm btn-outline-primary w-100" onclick="adjustQuantity(${item.id}, 1)">补货 1</button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-sm btn-light border w-100" onclick="openEditModal(${item.id})">编辑</button>
+                            </div>
+                            <div class="col-6">
+                                <button class="btn btn-sm btn-outline-danger w-100" onclick="deleteItem(${item.id})">删除</button>
+                            </div>
                         </div>
                     </article>
                 `;
@@ -307,8 +528,8 @@
 
         function getStatusText(item) {
             if (item.isExpired) return '已过期';
-            if (item.isExpiringSoon) return `还有 ${item.daysUntilExpiry} 天`;
-            if (item.isLowStock) return '需要补货';
+            if (item.isExpiringSoon) return `${item.daysUntilExpiry} 天内到期`;
+            if (item.isLowStock) return '库存偏低';
             return '正常';
         }
 
@@ -321,7 +542,7 @@
         }
 
         function openModal() {
-            document.getElementById('modalTitle').textContent = '新增物品';
+            document.getElementById('modalTitle').textContent = '新增食材';
             document.getElementById('submitBtn').textContent = '保存';
             document.getElementById('editItemId').value = '';
             document.getElementById('itemForm').reset();
@@ -331,14 +552,15 @@
             const nextWeek = new Date();
             nextWeek.setDate(nextWeek.getDate() + 7);
             document.getElementById('itemExpiry').valueAsDate = nextWeek;
-            document.getElementById('modalOverlay').classList.add('active');
+            itemModal.show();
             document.getElementById('itemName').focus();
         }
 
         function openEditModal(id) {
             const item = inventory.find((entry) => entry.id === id);
             if (!item) return;
-            document.getElementById('modalTitle').textContent = '编辑物品';
+
+            document.getElementById('modalTitle').textContent = '编辑食材';
             document.getElementById('submitBtn').textContent = '更新';
             document.getElementById('editItemId').value = item.id;
             document.getElementById('itemName').value = item.name;
@@ -349,11 +571,11 @@
             const parts = (item.note || '').split('；');
             document.getElementById('itemQuickNote').value = parts[0] || '';
             document.getElementById('itemNote').value = parts.slice(1).join('；');
-            document.getElementById('modalOverlay').classList.add('active');
+            itemModal.show();
         }
 
         function closeModal() {
-            document.getElementById('modalOverlay').classList.remove('active');
+            itemModal.hide();
         }
 
         async function handleSubmit(event) {
@@ -377,12 +599,15 @@
                     body: JSON.stringify(payload),
                 });
                 const result = await response.json();
-                if (!response.ok) { alert(result.error || '保存失败'); return; }
+                if (!response.ok) {
+                    alert(result.error || '保存失败');
+                    return;
+                }
                 closeModal();
                 await loadInventory();
             } catch (error) {
                 console.error('保存物品失败:', error);
-                alert('保存失败，请稍后再试。');
+                alert('保存失败，请稍后重试。');
             }
         }
 
@@ -394,7 +619,10 @@
                     body: JSON.stringify({ delta }),
                 });
                 const result = await response.json();
-                if (!response.ok) { alert(result.error || '调整库存失败'); return; }
+                if (!response.ok) {
+                    alert(result.error || '更新数量失败');
+                    return;
+                }
                 await loadInventory();
             } catch (error) {
                 console.error('调整库存失败:', error);
@@ -402,57 +630,30 @@
         }
 
         async function deleteItem(id) {
-            if (!confirm('确定删除这个物品吗？')) return;
+            if (!confirm('确定删除这条记录吗？')) return;
             try {
                 const response = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
                 const result = await response.json();
-                if (!response.ok) { alert(result.error || '删除失败'); return; }
-                selectedItems.delete(id);
+                if (!response.ok) {
+                    alert(result.error || '删除失败');
+                    return;
+                }
                 await loadInventory();
             } catch (error) {
                 console.error('删除物品失败:', error);
             }
         }
 
-        function toggleSelect(id) {
-            if (selectedItems.has(id)) selectedItems.delete(id);
-            else selectedItems.add(id);
-            renderPage();
-        }
-
-        function toggleSelectAll() {
-            const filtered = getFilteredItems();
-            const allSelected = filtered.length > 0 && filtered.every((item) => selectedItems.has(item.id));
-            if (allSelected) filtered.forEach((item) => selectedItems.delete(item.id));
-            else filtered.forEach((item) => selectedItems.add(item.id));
-            renderPage();
-        }
-
-        async function batchDelete() {
-            const ids = Array.from(selectedItems);
-            if (!ids.length || !confirm(`确定删除选中的 ${ids.length} 项吗？`)) return;
-            try {
-                const response = await fetch('/api/inventory/batch-delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ ids }),
-                });
-                const result = await response.json();
-                if (!response.ok) { alert(result.error || '批量删除失败'); return; }
-                selectedItems.clear();
-                await loadInventory();
-            } catch (error) {
-                console.error('批量删除失败:', error);
-            }
-        }
-
         async function clearExpired() {
-            if (!confirm('确定清理所有已过期物品吗？')) return;
+            if (!confirm('确定清理所有过期食材吗？')) return;
             try {
                 const response = await fetch('/api/inventory/clear-expired', { method: 'POST' });
                 const result = await response.json();
-                if (!response.ok) { alert(result.error || '清理失败'); return; }
-                alert(`已清理 ${result.deleted} 个过期物品。`);
+                if (!response.ok) {
+                    alert(result.error || '清理失败');
+                    return;
+                }
+                alert(`已清理 ${result.deleted} 条过期记录。`);
                 await loadInventory();
             } catch (error) {
                 console.error('清理过期物品失败:', error);
@@ -476,18 +677,18 @@
         }
 
         function escapeHtml(value) {
-            return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
         }
 
-        document.getElementById('modalOverlay').addEventListener('click', (event) => {
-            if (event.target.id === 'modalOverlay') closeModal();
+        document.addEventListener('DOMContentLoaded', () => {
+            itemModal = new bootstrap.Modal(document.getElementById('itemModal'));
+            loadInventory();
         });
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === 'Escape') closeModal();
-        });
-
-        loadInventory();
     </script>
 </body>
 </html>
