@@ -7,6 +7,7 @@ import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -30,6 +31,7 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences preferences;
     private LinearLayout errorContainer;
     private TextView errorMessageView;
+    private boolean hasLoadError = false;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override
@@ -73,7 +75,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPageFinished(WebView view, String url) {
                 super.onPageFinished(view, url);
-                showWebView();
+                if (!hasLoadError) {
+                    showWebView();
+                }
             }
 
             @Override
@@ -85,6 +89,16 @@ public class MainActivity extends AppCompatActivity {
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
+                    hasLoadError = true;
+                    showErrorState(getString(R.string.error_message));
+                }
+            }
+
+            @Override
+            public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse errorResponse) {
+                super.onReceivedHttpError(view, request, errorResponse);
+                if (request.isForMainFrame()) {
+                    hasLoadError = true;
                     showErrorState(getString(R.string.error_message));
                 }
             }
@@ -104,6 +118,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void loadConfiguredUrl() {
         String url = preferences.getString(KEY_SERVER_URL, DEFAULT_URL);
+        hasLoadError = false;
         errorContainer.setVisibility(View.GONE);
         webView.setVisibility(View.VISIBLE);
         webView.loadUrl(url);
