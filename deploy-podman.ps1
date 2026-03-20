@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
-$ContainerName = "fridge-inventory"
-$ImageName = "fridge-inventory:latest"
+$ContainerName = "regice-ms"
+$ImageName = "regice-ms:latest"
 $Port = if ($env:APP_PORT) { $env:APP_PORT } else { "5000" }
 $DataFile = Join-Path $PWD "fridge_inventory.json"
 

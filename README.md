@@ -28,8 +28,8 @@ http://localhost:5000
 停止服务：
 
 ```powershell
-podman stop fridge-inventory
-podman rm -f fridge-inventory
+podman stop regice-ms
+podman rm -f regice-ms
 ```
 
 ### 方案二：Podman Compose
@@ -63,7 +63,7 @@ podman-compose up -d --build
 ### Podman 原生命令
 
 ```bash
-podman build -t fridge-inventory:latest .
+podman build -t regice-ms:latest .
 ```
 
 ## 直接运行镜像
@@ -72,22 +72,22 @@ podman build -t fridge-inventory:latest .
 
 ```bash
 podman run -d \
-  --name fridge-inventory \
+  --name regice-ms \
   -p 5000:5000 \
   -v $(pwd)/fridge_inventory.json:/app/fridge_inventory.json \
   --restart unless-stopped \
-  fridge-inventory:latest
+  regice-ms:latest
 ```
 
 Windows PowerShell 示例：
 
 ```powershell
 podman run -d `
-  --name fridge-inventory `
+  --name regice-ms `
   -p 5000:5000 `
   -v "${PWD}\fridge_inventory.json:/app/fridge_inventory.json" `
   --restart unless-stopped `
-  fridge-inventory:latest
+  regice-ms:latest
 ```
 
 ## Compose 说明
@@ -100,8 +100,8 @@ podman run -d `
 
 默认配置如下：
 
-- 服务名：`fridge-inventory`
-- 容器名：`fridge-inventory`
+- 服务名：`regice-ms`
+- 容器名：`regice-ms`
 - 对外端口：`5000`
 - 数据文件挂载：`./fridge_inventory.json -> /app/fridge_inventory.json`
 - 重启策略：`unless-stopped`
@@ -195,13 +195,13 @@ podman ps
 查看日志：
 
 ```bash
-podman logs -f fridge-inventory
+podman logs -f regice-ms
 ```
 
 重启服务：
 
 ```bash
-podman restart fridge-inventory
+podman restart regice-ms
 ```
 
 重新构建并启动：
@@ -213,5 +213,5 @@ podman restart fridge-inventory
 删除容器但保留数据文件：
 
 ```bash
-podman rm -f fridge-inventory
+podman rm -f regice-ms
 ```
