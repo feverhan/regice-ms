@@ -22,6 +22,8 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.util.Locale;
+
 public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "regice_ms_prefs";
     private static final String KEY_SERVER_URL = "server_url";
@@ -117,7 +119,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadConfiguredUrl() {
-        String url = preferences.getString(KEY_SERVER_URL, DEFAULT_URL);
+        String url = normalizeServerUrl(preferences.getString(KEY_SERVER_URL, DEFAULT_URL));
         hasLoadError = false;
         errorContainer.setVisibility(View.GONE);
         webView.setVisibility(View.VISIBLE);
@@ -153,11 +155,28 @@ public class MainActivity extends AppCompatActivity {
                 if (value.isEmpty()) {
                     value = DEFAULT_URL;
                 }
-                preferences.edit().putString(KEY_SERVER_URL, value).apply();
+                preferences.edit().putString(KEY_SERVER_URL, normalizeServerUrl(value)).apply();
                 loadConfiguredUrl();
             })
             .create();
 
         dialog.show();
+    }
+
+    private String normalizeServerUrl(String rawUrl) {
+        if (rawUrl == null) {
+            return DEFAULT_URL;
+        }
+
+        String trimmed = rawUrl.trim();
+        if (trimmed.isEmpty()) {
+            return DEFAULT_URL;
+        }
+
+        String lower = trimmed.toLowerCase(Locale.ROOT);
+        if (!lower.startsWith("http://") && !lower.startsWith("https://")) {
+            return "http://" + trimmed;
+        }
+        return trimmed;
     }
 }

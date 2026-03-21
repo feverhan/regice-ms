@@ -1,228 +1,63 @@
-<!DOCTYPE html>
+﻿<!doctype html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>家庭冰箱库存管理</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-        :root {
-            --page-bg: #f6f7fb;
-            --panel-bg: #ffffff;
-            --line: #e9edf5;
-            --text-main: #1f2937;
-            --text-muted: #6b7280;
-            --accent: #0d6efd;
-            --soft: #f8fafc;
-        }
-
-        body {
-            background: linear-gradient(180deg, #f8f9fc 0%, #f2f4f8 100%);
-            color: var(--text-main);
-        }
-
-        .page-shell {
-            max-width: 1280px;
-        }
-
-        .app-hero {
-            background: linear-gradient(135deg, #ffffff 0%, #f7faff 100%);
-            border: 1px solid var(--line);
-            border-radius: 24px;
-            box-shadow: 0 10px 30px rgba(31, 41, 55, 0.06);
-        }
-
-        .hero-chip {
-            display: inline-flex;
-            align-items: center;
-            padding: 0.4rem 0.8rem;
-            border-radius: 999px;
-            background: #eef4ff;
-            color: #3158c9;
-            font-size: 0.8rem;
-            font-weight: 600;
-        }
-
-        .hero-actions .btn {
-            min-width: 120px;
-        }
-
-        .toolbar-card,
-        .section-card,
-        .side-card {
-            background: var(--panel-bg);
-            border: 1px solid var(--line);
-            border-radius: 20px;
-            box-shadow: 0 8px 24px rgba(31, 41, 55, 0.04);
-        }
-
-        .toolbar-card .form-control,
-        .toolbar-card .form-select,
-        .modal .form-control,
-        .modal .form-select {
-            border-radius: 12px;
-            border-color: #dbe2ec;
-            min-height: 46px;
-        }
-
-        .toolbar-card .form-control:focus,
-        .toolbar-card .form-select:focus,
-        .modal .form-control:focus,
-        .modal .form-select:focus,
-        .modal textarea:focus {
-            border-color: #86b7fe;
-            box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.12);
-        }
-
-        .stat-tile {
-            background: var(--soft);
-            border: 1px solid var(--line);
-            border-radius: 16px;
-            min-height: 104px;
-        }
-
-        .stat-label {
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-        .stat-value {
-            font-size: 1.9rem;
-            font-weight: 700;
-            line-height: 1;
-        }
-
-        .category-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.4rem;
-            padding: 0.55rem 0.85rem;
-            border-radius: 999px;
-            background: #f8fafc;
-            border: 1px solid var(--line);
-            font-size: 0.85rem;
-        }
-
-        .inventory-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 1rem;
-        }
-
-        .inventory-card {
-            background: #fff;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 1rem;
-            min-height: 100%;
-        }
-
-        .inventory-card.warning {
-            border-color: #ffe69c;
-            background: #fffdf6;
-        }
-
-        .inventory-card.expired {
-            border-color: #f5c2c7;
-            background: #fff8f8;
-        }
-
-        .inventory-card.low-stock {
-            box-shadow: inset 0 0 0 1px rgba(13, 110, 253, 0.08);
-        }
-
-        .inventory-title {
-            font-size: 1.05rem;
-            font-weight: 700;
-        }
-
-        .meta-grid {
-            display: grid;
-            grid-template-columns: repeat(2, minmax(0, 1fr));
-            gap: 0.75rem;
-        }
-
-        .meta-box {
-            background: #f8fafc;
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            padding: 0.75rem;
-        }
-
-        .meta-label {
-            display: block;
-            color: var(--text-muted);
-            font-size: 0.78rem;
-            margin-bottom: 0.25rem;
-        }
-
-        .meta-value {
-            font-weight: 600;
-            font-size: 0.95rem;
-        }
-
-        .item-note {
-            color: var(--text-muted);
-            font-size: 0.9rem;
-            min-height: 44px;
-        }
-
-        .shopping-item {
-            border: 1px solid var(--line);
-            border-radius: 14px;
-            background: #f8fafc;
-        }
-
-        .empty-box {
-            border: 1px dashed #d5dce7;
-            border-radius: 18px;
-            background: #fafbfd;
-        }
-
-        @media (max-width: 991.98px) {
-            .side-card {
-                position: static !important;
-            }
-        }
-
-        @media (max-width: 767.98px) {
-            .meta-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .hero-actions .btn {
-                width: 100%;
-            }
-        }
-    </style>
+    <title>冰箱库存管理</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/bootstrap/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='vendor/fontawesome/all.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/index.css') }}">
 </head>
+
 <body>
     <div class="container-fluid py-4">
         <div class="page-shell mx-auto">
-            <section class="app-hero p-4 p-lg-5 mb-4">
-                <div class="row g-4 align-items-center">
+            <section class="hero p-4 mb-3">
+                <div class="row g-3 align-items-center">
                     <div class="col-lg-8">
-                        <div class="hero-chip mb-3">冰箱管理台</div>
-                        <h1 class="h2 fw-bold mb-2">冰箱库存</h1>
-                        <p class="text-secondary mb-0">记录食材数量、查看临期情况，常用操作都可以直接在这里完成。</p>
+                        <div class="small opacity-75 mb-1"><i class="fas fa-snowflake"></i> 冰箱管理台</div>
+                        <h1 class="h3 mb-2">冰箱库存管理系统</h1>
+                        <p class="mb-0">管理库存、监控临期、AI 做菜建议与批量录入。</p>
+                        <div id="dailyAdviceBox" class="daily-advice">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <strong>今日饮食建议</strong><span id="dailyAdviceDate" class="small opacity-75"></span></div>
+                            <div id="dailyAdviceText">正在加载…</div>
+                        </div>
                     </div>
                     <div class="col-lg-4">
-                        <div class="hero-actions d-flex flex-column flex-sm-row flex-lg-column gap-2">
-                            <button class="btn btn-primary" onclick="openModal()">新增食材</button>
-                            <button class="btn btn-outline-secondary" onclick="exportData()">导出数据</button>
-                            <button class="btn btn-outline-danger" onclick="clearExpired()">清理过期</button>
+                        <div class="hero-actions">
+                            <button class="hero-app-btn" onclick="openModal()"><span class="hero-app-icon"><i
+                                        class="fas fa-plus"></i></span><span class="hero-app-label">新增</span></button>
+                            <button class="hero-app-btn" data-bs-toggle="offcanvas" data-bs-target="#bulkImportDrawer"
+                                aria-controls="bulkImportDrawer"><span class="hero-app-icon"><i
+                                        class="fas fa-wand-magic-sparkles"></i></span><span
+                                    class="hero-app-label">批量录入</span></button>
+                            <button class="hero-app-btn" data-bs-toggle="offcanvas" data-bs-target="#recipeDrawer"
+                                aria-controls="recipeDrawer"><span class="hero-app-icon"><i
+                                        class="fas fa-robot"></i></span><span class="hero-app-label">AI
+                                    做菜</span></button>
+                            <button class="hero-app-btn" onclick="exportData()"><span class="hero-app-icon"><i
+                                        class="fas fa-download"></i></span><span
+                                    class="hero-app-label">导出</span></button>
+                            <button class="hero-app-btn" onclick="clearExpired()"><span class="hero-app-icon"><i
+                                        class="fas fa-trash"></i></span><span
+                                    class="hero-app-label">清理过期</span></button>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <section class="toolbar-card p-3 mb-4">
-                <div class="row g-2">
-                    <div class="col-lg-5">
-                        <input id="searchInput" type="text" class="form-control" placeholder="搜索食材名称、分类或备注" oninput="renderPage()">
+            <section class="toolbar mb-3">
+                <h2 class="toolbar-title">快速搜索库存</h2>
+                <div class="toolbar-filters">
+                    <div class="toolbar-field"><label class="field-label" for="searchInput">关键词</label>
+                        <div class="search-input-wrap"><i class="fas fa-magnifying-glass search-icon"></i><input
+                                id="searchInput" type="text" class="form-control" placeholder="搜索食材名称、分类或备注"
+                                oninput="renderPage()"></div>
                     </div>
-                    <div class="col-sm-4 col-lg-2">
-                        <select id="categoryFilter" class="form-select" onchange="renderPage()">
+                    <div class="toolbar-field"><label class="field-label" for="categoryFilter">分类</label><select
+                            id="categoryFilter" class="form-select" onchange="renderPage()">
                             <option value="">全部分类</option>
                             <option value="蔬菜">蔬菜</option>
                             <option value="水果">水果</option>
@@ -234,19 +69,17 @@
                             <option value="主食">主食</option>
                             <option value="速食">速食</option>
                             <option value="其他">其他</option>
-                        </select>
-                    </div>
-                    <div class="col-sm-4 col-lg-2">
-                        <select id="statusFilter" class="form-select" onchange="renderPage()">
+                        </select></div>
+                    <div class="toolbar-field"><label class="field-label" for="statusFilter">状态</label><select
+                            id="statusFilter" class="form-select" onchange="renderPage()">
                             <option value="">全部状态</option>
                             <option value="expired">已过期</option>
                             <option value="warning">即将过期</option>
                             <option value="low">低库存</option>
                             <option value="normal">正常</option>
-                        </select>
-                    </div>
-                    <div class="col-sm-4 col-lg-3">
-                        <select id="sortBy" class="form-select" onchange="loadInventory()">
+                        </select></div>
+                    <div class="toolbar-field"><label class="field-label" for="sortBy">排序</label><select id="sortBy"
+                            class="form-select" onchange="loadInventory()">
                             <option value="recent">按最近添加</option>
                             <option value="status">按状态优先</option>
                             <option value="expiry">按过期时间</option>
@@ -254,52 +87,91 @@
                             <option value="quantity_asc">按数量从低到高</option>
                             <option value="name">按名称</option>
                             <option value="category">按分类</option>
-                        </select>
-                    </div>
+                        </select></div>
                 </div>
             </section>
 
-            <div class="row g-4 align-items-start">
+            <div class="row g-3 align-items-start">
                 <div class="col-lg-9">
-                    <section class="section-card p-3 p-lg-4">
-                        <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-2 mb-3">
-                            <div>
-                                <h2 class="h4 mb-1">库存列表</h2>
-                                <p class="text-secondary mb-0">当前冰箱里的食材都在这里。</p>
-                            </div>
+                    <section class="panel p-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <h2 class="h5 mb-0">库存列表</h2>
                         </div>
-
-                        <div class="row g-3 mb-3">
-                            <div class="col-sm-6">
-                                <div class="stat-tile p-3">
-                                    <div class="stat-label">已记录食材</div>
-                                    <div class="stat-value" id="itemCount">0</div>
-                                </div>
-                            </div>
-                            <div class="col-sm-6">
-                                <div class="stat-tile p-3">
-                                    <div class="stat-label">即将过期</div>
-                                    <div class="stat-value text-warning" id="expiringSoon">0</div>
-                                </div>
-                            </div>
+                        <div class="mb-2">
+                            <h3 class="h6 mb-2">分类分布</h3>
+                            <div id="categoryStats" class="d-flex flex-wrap gap-2"></div>
                         </div>
-
-                        <div id="categoryStats" class="d-flex flex-wrap gap-2 mb-3"></div>
-
                         <div id="itemList" class="inventory-grid"></div>
                     </section>
                 </div>
-
                 <div class="col-lg-3">
-                    <aside class="side-card p-3 p-lg-4 position-sticky" style="top: 24px;">
-                        <div class="mb-3">
-                            <h2 class="h5 mb-1">补货建议</h2>
-                            <p class="text-secondary mb-0">低于提醒值的食材会显示在这里。</p>
+                    <aside class="side p-3 position-sticky" style="top:20px;">
+                        <div class="stats-strip">
+                            <div class="stat-tile"><span class="stat-icon"><i class="fas fa-box-open"></i></span>
+                                <div>
+                                    <div class="stat-label">库存</div>
+                                    <div class="stat-value" id="itemCount">0</div>
+                                </div>
+                            </div>
+                            <div class="stat-tile"><span class="stat-icon"><i class="fas fa-hourglass-half"></i></span>
+                                <div>
+                                    <div class="stat-label">临期</div>
+                                    <div class="stat-value" id="expiringSoon">0</div>
+                                </div>
+                            </div>
+                            <div class="stat-tile"><span class="stat-icon"><i
+                                        class="fas fa-triangle-exclamation"></i></span>
+                                <div>
+                                    <div class="stat-label">低库存</div>
+                                    <div class="stat-value" id="lowStockCount">0</div>
+                                </div>
+                            </div>
+                            <div class="stat-tile"><span class="stat-icon"><i class="fas fa-ban"></i></span>
+                                <div>
+                                    <div class="stat-label">过期</div>
+                                    <div class="stat-value" id="expiredCount">0</div>
+                                </div>
+                            </div>
                         </div>
-                        <div id="shoppingList" class="d-grid gap-2"></div>
+                        <div>
+                            <h2 class="h6 mb-1">补货建议</h2>
+                            <p class="small text-secondary mb-2">只显示已开启提醒且低于阈值的食材。</p>
+                            <div id="shoppingList" class="d-grid gap-2"></div>
+                        </div>
                     </aside>
                 </div>
             </div>
+        </div>
+    </div>
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="recipeDrawer" aria-labelledby="recipeDrawerLabel">
+        <div class="offcanvas-header">
+            <div>
+                <h2 class="offcanvas-title h5 mb-1" id="recipeDrawerLabel">AI 做菜建议</h2>
+                <p class="text-secondary mb-0">单次提问，返回完整建议。</p>
+            </div><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body d-grid gap-2"><textarea id="recipeDrawerQuery" class="form-control" rows="5"
+                placeholder="例如：今晚做两人晚饭，优先消耗快过期食材"></textarea>
+            <div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" id="recipeDrawerSubmitBtn"
+                    onclick="generateRecipeSuggestions()">生成建议</button><button class="btn btn-outline-secondary"
+                    onclick="fillRecipePrompt('推荐2道优先消耗临期食材的家常菜')">使用示例</button></div>
+            <div class="ai-result p-3" id="recipeDrawerResult">AI 会在这里输出菜名、现有食材、缺少食材和简要做法。</div>
+        </div>
+    </div>
+
+    <div class="offcanvas offcanvas-end" tabindex="-1" id="bulkImportDrawer" aria-labelledby="bulkImportDrawerLabel">
+        <div class="offcanvas-header">
+            <div>
+                <h2 class="offcanvas-title h5 mb-1" id="bulkImportDrawerLabel">AI 批量录入</h2>
+                <p class="text-secondary mb-0">输入文本，自动解析并新增到库存。</p>
+            </div><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+        </div>
+        <div class="offcanvas-body d-grid gap-2"><textarea id="bulkImportText" class="form-control" rows="8"
+                placeholder="例如：今天买了2瓶牛奶、1把青菜、3个鸡蛋，鸡蛋下周三到期。"></textarea>
+            <div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" id="bulkImportSubmitBtn"
+                    onclick="bulkImportInventory()">解析并入库</button><button class="btn btn-outline-secondary"
+                    type="button" onclick="fillBulkImportExample()">填入示例</button></div>
+            <div class="ai-result p-3" id="bulkImportResult">这里会显示本次导入摘要。</div>
         </div>
     </div>
 
@@ -307,24 +179,33 @@
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-header border-0 pb-0">
-                    <h2 id="modalTitle" class="modal-title fs-4">新增食材</h2>
-                    <button type="button" class="btn-close" aria-label="Close" onclick="closeModal()"></button>
+                    <h2 id="modalTitle" class="modal-title fs-5">新增食材</h2><button type="button" class="btn-close"
+                        aria-label="Close" onclick="closeModal()"></button>
                 </div>
                 <div class="modal-body pt-3">
-                    <form id="itemForm" onsubmit="handleSubmit(event)">
-                        <input type="hidden" id="editItemId">
+                    <form id="itemForm" onsubmit="handleSubmit(event)"><input type="hidden" id="editItemId">
                         <div class="row g-3">
-                            <div class="col-sm-6">
-                                <label for="itemName" class="form-label">食材名称</label>
-                                <input id="itemName" type="text" class="form-control" required placeholder="例如：牛奶">
-                            </div>
-                            <div class="col-sm-6">
-                                <label for="itemQuantity" class="form-label">当前数量</label>
-                                <input id="itemQuantity" type="number" class="form-control" min="0" required value="1">
-                            </div>
-                            <div class="col-sm-6">
-                                <label for="itemCategory" class="form-label">分类</label>
-                                <select id="itemCategory" class="form-select">
+                            <div class="col-sm-6"><label for="itemName" class="form-label">食材名称</label><input
+                                    id="itemName" type="text" class="form-control" required></div>
+                            <div class="col-sm-3"><label for="itemQuantity" class="form-label">数量</label><input
+                                    id="itemQuantity" type="number" class="form-control" min="0" step="0.1" required
+                                    value="1"></div>
+                            <div class="col-sm-3" id="itemUnitCol"><label for="itemUnit"
+                                    class="form-label">单位</label><input id="itemUnit" type="text" class="form-control"
+                                    list="unitOptions" value="个" placeholder="个/把/袋/瓶"><datalist id="unitOptions">
+                                    <option value="个"></option>
+                                    <option value="把"></option>
+                                    <option value="袋"></option>
+                                    <option value="瓶"></option>
+                                    <option value="盒"></option>
+                                    <option value="包"></option>
+                                    <option value="克"></option>
+                                    <option value="千克"></option>
+                                    <option value="毫升"></option>
+                                    <option value="升"></option>
+                                </datalist></div>
+                            <div class="col-sm-6"><label for="itemCategory" class="form-label">分类</label><select
+                                    id="itemCategory" class="form-select">
                                     <option value="蔬菜">蔬菜</option>
                                     <option value="水果">水果</option>
                                     <option value="肉类">肉类</option>
@@ -335,29 +216,20 @@
                                     <option value="主食">主食</option>
                                     <option value="速食">速食</option>
                                     <option value="其他" selected>其他</option>
-                                </select>
-                            </div>
-                            <div class="col-sm-6">
-                                <label for="itemExpiry" class="form-label">过期日期</label>
-                                <input id="itemExpiry" type="date" class="form-control">
-                            </div>
-                            <div class="col-sm-6">
-                                <label for="itemMinQuantity" class="form-label">提醒值</label>
-                                <input id="itemMinQuantity" type="number" class="form-control" min="1" required value="1">
-                            </div>
-                            <div class="col-sm-6">
-                                <label for="itemQuickNote" class="form-label">简短备注</label>
-                                <input id="itemQuickNote" type="text" class="form-control" placeholder="例如：早餐常用">
-                            </div>
-                            <div class="col-12">
-                                <label for="itemNote" class="form-label">详细备注</label>
-                                <textarea id="itemNote" class="form-control" rows="4" placeholder="可记录品牌、存放位置、购买时间等信息"></textarea>
-                            </div>
+                                </select></div>
+                            <div class="col-sm-6"><label for="itemExpiry" class="form-label">过期日期</label><input
+                                    id="itemExpiry" type="date" class="form-control"></div>
+                            <div class="col-sm-6"><label for="itemMinQuantity"
+                                    class="form-label">提醒值（0=不提醒）</label><input id="itemMinQuantity" type="number"
+                                    class="form-control" min="0" step="0.1" required value="0"></div>
+                            <div class="col-sm-6"><label for="itemQuickNote" class="form-label">简短备注</label><input
+                                    id="itemQuickNote" type="text" class="form-control" placeholder="可选"></div>
+                            <div class="col-12"><label for="itemNote" class="form-label">详细备注</label><textarea
+                                    id="itemNote" class="form-control" rows="3" placeholder="可选"></textarea></div>
                         </div>
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <button type="button" class="btn btn-light border" onclick="closeModal()">取消</button>
-                            <button type="submit" class="btn btn-primary" id="submitBtn">保存</button>
-                        </div>
+                        <div class="d-flex justify-content-end gap-2 mt-3"><button type="button"
+                                class="btn btn-light border" onclick="closeModal()">取消</button><button type="submit"
+                                class="btn btn-primary" id="submitBtn">保存</button></div>
                     </form>
                 </div>
             </div>
@@ -365,330 +237,7 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        let inventory = [];
-        let stats = { total: 0, itemCount: 0, expiringSoon: 0, expired: 0, lowStock: 0, categories: {}, shoppingList: [] };
-        let itemModal;
-
-        async function loadInventory() {
-            try {
-                const sortBy = document.getElementById('sortBy').value;
-                const response = await fetch(`/api/inventory?sort=${encodeURIComponent(sortBy)}`);
-                inventory = await response.json();
-                await loadStats();
-                renderPage();
-            } catch (error) {
-                console.error('加载库存失败:', error);
-                alert('加载失败，请检查服务是否正常运行。');
-            }
-        }
-
-        async function loadStats() {
-            const response = await fetch('/api/stats');
-            stats = await response.json();
-        }
-
-        function getFilteredItems() {
-            const searchTerm = document.getElementById('searchInput').value.trim().toLowerCase();
-            const category = document.getElementById('categoryFilter').value;
-            const status = document.getElementById('statusFilter').value;
-
-            return inventory.filter((item) => {
-                const note = (item.note || '').toLowerCase();
-                const matchesSearch = !searchTerm || item.name.toLowerCase().includes(searchTerm) || item.category.toLowerCase().includes(searchTerm) || note.includes(searchTerm);
-                const matchesCategory = !category || item.category === category;
-
-                let matchesStatus = true;
-                if (status === 'expired') matchesStatus = item.isExpired;
-                else if (status === 'warning') matchesStatus = item.isExpiringSoon && !item.isExpired;
-                else if (status === 'low') matchesStatus = item.isLowStock;
-                else if (status === 'normal') matchesStatus = !item.isExpired && !item.isExpiringSoon && !item.isLowStock;
-
-                return matchesSearch && matchesCategory && matchesStatus;
-            });
-        }
-
-        function renderPage() {
-            renderStats();
-            renderCategoryStats();
-            renderShoppingList();
-            renderInventory(getFilteredItems());
-        }
-
-        function renderStats() {
-            document.getElementById('itemCount').textContent = stats.itemCount || 0;
-            document.getElementById('expiringSoon').textContent = stats.expiringSoon || 0;
-        }
-
-        function renderCategoryStats() {
-            const container = document.getElementById('categoryStats');
-            const entries = Object.entries(stats.categories || {}).sort((a, b) => b[1] - a[1]);
-
-            container.innerHTML = entries.length
-                ? entries.map(([name, count]) => `<div class="category-chip">${escapeHtml(name)}<strong>${count}</strong></div>`).join('')
-                : '<div class="category-chip">暂无分类统计</div>';
-        }
-
-        function renderShoppingList() {
-            const container = document.getElementById('shoppingList');
-            const list = stats.shoppingList || [];
-
-            container.innerHTML = list.length
-                ? list.map((item) => `
-                    <div class="shopping-item p-3">
-                        <div class="fw-semibold mb-1">${escapeHtml(item.name)}</div>
-                        <div class="text-secondary small">当前 ${item.quantity}，提醒值 ${item.minQuantity}</div>
-                        <div class="text-secondary small">建议补 ${Math.max(item.gap, 1)}，分类：${escapeHtml(item.category)}</div>
-                    </div>
-                `).join('')
-                : `
-                    <div class="empty-box text-center p-4">
-                        <div class="fw-semibold mb-1">暂时不需要补货</div>
-                        <div class="text-secondary small">数量低于提醒值的食材会自动出现在这里。</div>
-                    </div>
-                `;
-        }
-
-        function renderInventory(items) {
-            const container = document.getElementById('itemList');
-
-            if (!items.length) {
-                container.innerHTML = `
-                    <div class="empty-box text-center p-5" style="grid-column: 1 / -1;">
-                        <div class="fw-semibold mb-1">没有找到相关食材</div>
-                        <div class="text-secondary small">试试调整筛选条件，或者新增一条记录。</div>
-                    </div>
-                `;
-                return;
-            }
-
-            container.innerHTML = items.map((item) => {
-                const badges = [`<span class="badge text-bg-light border">${escapeHtml(item.category)}</span>`];
-                const cardClasses = ['inventory-card'];
-
-                if (item.isExpired) {
-                    badges.push('<span class="badge text-bg-danger">已过期</span>');
-                    cardClasses.push('expired');
-                } else if (item.isExpiringSoon) {
-                    badges.push('<span class="badge text-bg-warning">即将过期</span>');
-                    cardClasses.push('warning');
-                }
-
-                if (item.isLowStock) {
-                    badges.push('<span class="badge text-bg-primary">低库存</span>');
-                    cardClasses.push('low-stock');
-                }
-
-                return `
-                    <article class="${cardClasses.join(' ')} d-flex flex-column gap-3">
-                        <div class="d-flex justify-content-between align-items-start gap-3">
-                            <div class="inventory-title">${escapeHtml(item.name)}</div>
-                            <div class="d-flex flex-wrap gap-1 justify-content-end">${badges.join('')}</div>
-                        </div>
-
-                        <div class="meta-grid">
-                            <div class="meta-box">
-                                <span class="meta-label">当前数量</span>
-                                <div class="meta-value">${item.quantity}</div>
-                            </div>
-                            <div class="meta-box">
-                                <span class="meta-label">提醒值</span>
-                                <div class="meta-value">${item.minQuantity}</div>
-                            </div>
-                            <div class="meta-box">
-                                <span class="meta-label">过期日期</span>
-                                <div class="meta-value">${formatExpiry(item)}</div>
-                            </div>
-                            <div class="meta-box">
-                                <span class="meta-label">库存状态</span>
-                                <div class="meta-value">${getStatusText(item)}</div>
-                            </div>
-                        </div>
-
-                        <div class="item-note">${escapeHtml(item.note || '无备注')}</div>
-
-                        <div class="row g-2 mt-auto">
-                            <div class="col-6">
-                                <button class="btn btn-sm btn-outline-primary w-100" onclick="adjustQuantity(${item.id}, -1)">消耗 1</button>
-                            </div>
-                            <div class="col-6">
-                                <button class="btn btn-sm btn-outline-primary w-100" onclick="adjustQuantity(${item.id}, 1)">补货 1</button>
-                            </div>
-                            <div class="col-6">
-                                <button class="btn btn-sm btn-light border w-100" onclick="openEditModal(${item.id})">编辑</button>
-                            </div>
-                            <div class="col-6">
-                                <button class="btn btn-sm btn-outline-danger w-100" onclick="deleteItem(${item.id})">删除</button>
-                            </div>
-                        </div>
-                    </article>
-                `;
-            }).join('');
-        }
-
-        function getStatusText(item) {
-            if (item.isExpired) return '已过期';
-            if (item.isExpiringSoon) return `${item.daysUntilExpiry} 天内到期`;
-            if (item.isLowStock) return '库存偏低';
-            return '正常';
-        }
-
-        function formatExpiry(item) {
-            if (!item.expiry) return '未设置';
-            const date = new Date(item.expiry).toLocaleDateString('zh-CN');
-            if (item.isExpired) return `${date}（已过期）`;
-            if (item.isExpiringSoon) return `${date}（${item.daysUntilExpiry} 天内）`;
-            return date;
-        }
-
-        function openModal() {
-            document.getElementById('modalTitle').textContent = '新增食材';
-            document.getElementById('submitBtn').textContent = '保存';
-            document.getElementById('editItemId').value = '';
-            document.getElementById('itemForm').reset();
-            document.getElementById('itemQuantity').value = 1;
-            document.getElementById('itemMinQuantity').value = 1;
-            document.getElementById('itemCategory').value = '其他';
-            const nextWeek = new Date();
-            nextWeek.setDate(nextWeek.getDate() + 7);
-            document.getElementById('itemExpiry').valueAsDate = nextWeek;
-            itemModal.show();
-            document.getElementById('itemName').focus();
-        }
-
-        function openEditModal(id) {
-            const item = inventory.find((entry) => entry.id === id);
-            if (!item) return;
-
-            document.getElementById('modalTitle').textContent = '编辑食材';
-            document.getElementById('submitBtn').textContent = '更新';
-            document.getElementById('editItemId').value = item.id;
-            document.getElementById('itemName').value = item.name;
-            document.getElementById('itemQuantity').value = item.quantity;
-            document.getElementById('itemCategory').value = item.category;
-            document.getElementById('itemExpiry').value = item.expiry || '';
-            document.getElementById('itemMinQuantity').value = item.minQuantity || 1;
-            const parts = (item.note || '').split('；');
-            document.getElementById('itemQuickNote').value = parts[0] || '';
-            document.getElementById('itemNote').value = parts.slice(1).join('；');
-            itemModal.show();
-        }
-
-        function closeModal() {
-            itemModal.hide();
-        }
-
-        async function handleSubmit(event) {
-            event.preventDefault();
-            const editId = document.getElementById('editItemId').value;
-            const quickNote = document.getElementById('itemQuickNote').value.trim();
-            const note = document.getElementById('itemNote').value.trim();
-            const payload = {
-                name: document.getElementById('itemName').value.trim(),
-                quantity: Number(document.getElementById('itemQuantity').value),
-                category: document.getElementById('itemCategory').value,
-                expiry: document.getElementById('itemExpiry').value,
-                minQuantity: Number(document.getElementById('itemMinQuantity').value),
-                note: [quickNote, note].filter(Boolean).join('；'),
-            };
-
-            try {
-                const response = await fetch(editId ? `/api/inventory/${editId}` : '/api/inventory', {
-                    method: editId ? 'PUT' : 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload),
-                });
-                const result = await response.json();
-                if (!response.ok) {
-                    alert(result.error || '保存失败');
-                    return;
-                }
-                closeModal();
-                await loadInventory();
-            } catch (error) {
-                console.error('保存物品失败:', error);
-                alert('保存失败，请稍后重试。');
-            }
-        }
-
-        async function adjustQuantity(id, delta) {
-            try {
-                const response = await fetch(`/api/inventory/${id}/adjust`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ delta }),
-                });
-                const result = await response.json();
-                if (!response.ok) {
-                    alert(result.error || '更新数量失败');
-                    return;
-                }
-                await loadInventory();
-            } catch (error) {
-                console.error('调整库存失败:', error);
-            }
-        }
-
-        async function deleteItem(id) {
-            if (!confirm('确定删除这条记录吗？')) return;
-            try {
-                const response = await fetch(`/api/inventory/${id}`, { method: 'DELETE' });
-                const result = await response.json();
-                if (!response.ok) {
-                    alert(result.error || '删除失败');
-                    return;
-                }
-                await loadInventory();
-            } catch (error) {
-                console.error('删除物品失败:', error);
-            }
-        }
-
-        async function clearExpired() {
-            if (!confirm('确定清理所有过期食材吗？')) return;
-            try {
-                const response = await fetch('/api/inventory/clear-expired', { method: 'POST' });
-                const result = await response.json();
-                if (!response.ok) {
-                    alert(result.error || '清理失败');
-                    return;
-                }
-                alert(`已清理 ${result.deleted} 条过期记录。`);
-                await loadInventory();
-            } catch (error) {
-                console.error('清理过期物品失败:', error);
-            }
-        }
-
-        async function exportData() {
-            try {
-                const response = await fetch('/api/export');
-                const data = await response.json();
-                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                const url = URL.createObjectURL(blob);
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `fridge_inventory_${new Date().toISOString().split('T')[0]}.json`;
-                link.click();
-                URL.revokeObjectURL(url);
-            } catch (error) {
-                console.error('导出失败:', error);
-            }
-        }
-
-        function escapeHtml(value) {
-            return String(value)
-                .replaceAll('&', '&amp;')
-                .replaceAll('<', '&lt;')
-                .replaceAll('>', '&gt;')
-                .replaceAll('"', '&quot;')
-                .replaceAll("'", '&#39;');
-        }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            itemModal = new bootstrap.Modal(document.getElementById('itemModal'));
-            loadInventory();
-        });
-    </script>
+    <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
+
 </html>

@@ -3,11 +3,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: crpi-7ove6igc635triub.cn-shanghai.personal.cr.aliyuncs.com/hanqw_ztt/regice_ms
     restart: unless-stopped
     ports:
       - "${APP_PORT:-5000}:5000"
     environment:
-      PORT: 5000
+      - PORT=${PORT:-5000}
+      - HOST=${HOST:-0.0.0.0}
+      - QWEN_API_KEY=${QWEN_API_KEY:-}
+      - DASHSCOPE_API_KEY=${DASHSCOPE_API_KEY:-}
+      - QWEN_MODEL=${QWEN_MODEL:-qwen-plus}
+      - QWEN_BASE_URLS=${QWEN_BASE_URLS:-https://dashscope-intl.aliyuncs.com/compatible-mode/v1/chat/completions,https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions}
+      - FLASK_DEBUG=${FLASK_DEBUG:-false}
     volumes:
       - ./fridge_inventory.json:/app/fridge_inventory.json
+      - ./daily_advice_cache.json:/app/daily_advice_cache.json

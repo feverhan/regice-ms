@@ -1,22 +1,101 @@
 [
   {
-    "id": 1773903442826269,
-    "name": "辣椒粉",
-    "quantity": 1,
-    "category": "调料",
-    "expiry": "2026-03-26",
-    "addedDate": "2026-03-19T14:57:22.826277",
-    "minQuantity": 1,
+    "id": 1774098256680846,
+    "name": "青菜",
+    "quantity": 1.0,
+    "unit": "把",
+    "category": "蔬菜",
+    "expiry": "",
+    "addedDate": "2026-03-21T21:04:16.680845",
+    "minQuantity": 1.0,
     "note": ""
   },
   {
-    "id": 1773903364457276,
+    "id": 1774098256680847,
+    "name": "鸡蛋",
+    "quantity": 3.0,
+    "unit": "个",
+    "category": "其他",
+    "expiry": "2026-03-25",
+    "addedDate": "2026-03-21T21:04:16.680845",
+    "minQuantity": 1.0,
+    "note": ""
+  },
+  {
+    "id": 1774098256680848,
+    "name": "辣椒粉",
+    "quantity": 1.0,
+    "unit": "袋",
+    "category": "调料",
+    "expiry": "",
+    "addedDate": "2026-03-21T21:04:16.680845",
+    "minQuantity": 1.0,
+    "note": "放在上层"
+  },
+  {
+    "id": 1774093503531352,
     "name": "牛奶",
-    "quantity": 0,
+    "quantity": 2.0,
+    "unit": "瓶",
     "category": "乳制品",
-    "expiry": "2026-03-27",
-    "addedDate": "2026-03-19T14:56:04.457284",
-    "minQuantity": 1,
+    "expiry": "",
+    "addedDate": "2026-03-21T19:45:03.531352",
+    "minQuantity": 1.0,
+    "note": ""
+  },
+  {
+    "id": 1774093503531353,
+    "name": "青菜",
+    "quantity": 1.0,
+    "unit": "把",
+    "category": "蔬菜",
+    "expiry": "",
+    "addedDate": "2026-03-21T19:45:03.531352",
+    "minQuantity": 1.0,
+    "note": ""
+  },
+  {
+    "id": 1774093503531354,
+    "name": "鸡蛋",
+    "quantity": 3.0,
+    "unit": "个",
+    "category": "其他",
+    "expiry": "2026-03-25",
+    "addedDate": "2026-03-21T19:45:03.531352",
+    "minQuantity": 1.0,
+    "note": ""
+  },
+  {
+    "id": 1774093503531355,
+    "name": "辣椒粉",
+    "quantity": 1.0,
+    "unit": "袋",
+    "category": "调料",
+    "expiry": "",
+    "addedDate": "2026-03-21T19:45:03.531352",
+    "minQuantity": 1.0,
+    "note": "放在上层"
+  },
+  {
+    "id": 1774085198319508,
+    "name": "青菜",
+    "quantity": 13.0,
+    "unit": "个",
+    "category": "蔬菜",
+    "expiry": "2026-03-28",
+    "addedDate": "2026-03-21T17:26:38.319508",
+    "minQuantity": 1.0,
+    "note": ""
+  },
+  {
+    "id": 1773903442826269,
+    "name": "辣椒粉",
+    "quantity": 5.0,
+    "unit": "罐",
+    "category": "调料",
+    "expiry": "2037-03-26",
+    "addedDate": "2026-03-19T14:57:22.826277",
+    "minQuantity": 0.1,
     "note": ""
   }
 ]

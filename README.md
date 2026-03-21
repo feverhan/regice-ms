@@ -149,12 +149,17 @@ http://127.0.0.1:5000
 - `PORT`：服务端口，默认 `5000`
 - `HOST`：监听地址，默认 `0.0.0.0`
 - `FLASK_DEBUG`：是否开启调试模式，默认关闭
+- `QWEN_API_KEY` 或 `DASHSCOPE_API_KEY`：Qwen API 密钥，用于 AI 做菜建议功能
+- `QWEN_MODEL`：使用的模型，默认 `qwen-plus`
+- `QWEN_BASE_URLS`：API 基础 URL 列表，用逗号分隔
 
 示例：
 
 ```bash
-FLASK_DEBUG=1 python app.py
+QWEN_API_KEY=your_key_here FLASK_DEBUG=1 python app.py
 ```
+
+对于 Docker 部署，可以在 `.env` 文件中设置，或在 `docker-compose.yml` 的 `environment` 中指定。
 
 ## 数据持久化
 
