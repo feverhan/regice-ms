@@ -23,43 +23,67 @@ QWEN_BASE_URLS = [
     ).split(",")
     if url.strip()
 ]
-DATA_FILE = "fridge_inventory.json"
-DAILY_ADVICE_CACHE_FILE = "daily_advice_cache.json"
+DATA_FILE = os.getenv("DATA_FILE", "fridge_inventory.json")
+DAILY_ADVICE_CACHE_FILE = os.getenv("DAILY_ADVICE_CACHE_FILE", "daily_advice_cache.json")
 DEFAULT_CATEGORY = "其他"
+
+
+def resolve_json_file_path(path_value, fallback_filename):
+    """Normalize configured JSON path.
+
+    - If config points to a directory, store JSON under that directory.
+    - If config points to a file path, keep it.
+    """
+    candidate = (path_value or "").strip() or fallback_filename
+    if os.path.isdir(candidate):
+        return os.path.join(candidate, fallback_filename)
+    return candidate
+
+
+def ensure_parent_dir(file_path):
+    parent = os.path.dirname(file_path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
 
 
 def load_inventory():
     """从 JSON 文件加载库存数据。"""
-    if not os.path.exists(DATA_FILE):
+    inventory_file = resolve_json_file_path(DATA_FILE, "fridge_inventory.json")
+    if not os.path.exists(inventory_file):
         return []
 
     try:
-        with open(DATA_FILE, "r", encoding="utf-8") as file:
+        with open(inventory_file, "r", encoding="utf-8") as file:
             data = json.load(file)
             return [normalize_item(item) for item in data if isinstance(item, dict)]
-    except (json.JSONDecodeError, FileNotFoundError):
+    except (json.JSONDecodeError, FileNotFoundError, IsADirectoryError, PermissionError):
         return []
 
 
 def save_inventory(inventory):
     """保存库存数据。"""
-    with open(DATA_FILE, "w", encoding="utf-8") as file:
+    inventory_file = resolve_json_file_path(DATA_FILE, "fridge_inventory.json")
+    ensure_parent_dir(inventory_file)
+    with open(inventory_file, "w", encoding="utf-8") as file:
         json.dump(inventory, file, ensure_ascii=False, indent=2)
 
 
 def load_daily_advice_cache():
-    if not os.path.exists(DAILY_ADVICE_CACHE_FILE):
+    cache_file = resolve_json_file_path(DAILY_ADVICE_CACHE_FILE, "daily_advice_cache.json")
+    if not os.path.exists(cache_file):
         return {}
 
     try:
-        with open(DAILY_ADVICE_CACHE_FILE, "r", encoding="utf-8") as file:
+        with open(cache_file, "r", encoding="utf-8") as file:
             return json.load(file)
-    except (json.JSONDecodeError, FileNotFoundError):
+    except (json.JSONDecodeError, FileNotFoundError, IsADirectoryError, PermissionError):
         return {}
 
 
 def save_daily_advice_cache(cache):
-    with open(DAILY_ADVICE_CACHE_FILE, "w", encoding="utf-8") as file:
+    cache_file = resolve_json_file_path(DAILY_ADVICE_CACHE_FILE, "daily_advice_cache.json")
+    ensure_parent_dir(cache_file)
+    with open(cache_file, "w", encoding="utf-8") as file:
         json.dump(cache, file, ensure_ascii=False, indent=2)
 
 
@@ -722,7 +746,8 @@ if __name__ == "__main__":
     print("=" * 50)
     print("家庭冰箱库存管理系统")
     print("=" * 50)
-    print(f"数据文件: {os.path.abspath(DATA_FILE)}")
+    print(f"库存数据文件: {os.path.abspath(resolve_json_file_path(DATA_FILE, 'fridge_inventory.json'))}")
+    print(f"建议缓存文件: {os.path.abspath(resolve_json_file_path(DAILY_ADVICE_CACHE_FILE, 'daily_advice_cache.json'))}")
     print(f"服务启动地址: http://127.0.0.1:{port}")
     print("=" * 50)
 
