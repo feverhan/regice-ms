@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: regice-ms
+    container_name: crpi-7ove6igc635triub.cn-shanghai.personal.cr.aliyuncs.com/hanqw_ztt/regice_ms
     restart: unless-stopped
     ports:
       - "${APP_PORT:-5000}:5000"
