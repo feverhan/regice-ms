@@ -21,7 +21,12 @@
                         <p class="mb-0">管理库存、监控临期、AI 做菜建议与批量录入。</p>
                         <div id="dailyAdviceBox" class="daily-advice">
                             <div class="d-flex justify-content-between align-items-center mb-1">
-                                <strong>今日饮食建议</strong><span id="dailyAdviceDate" class="small opacity-75"></span></div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <strong>今日饮食建议</strong>
+                                    <button id="refreshDailyAdviceBtn" type="button" class="btn btn-sm btn-light py-0 px-2">刷新</button>
+                                </div>
+                                <span id="dailyAdviceDate" class="small opacity-75"></span>
+                            </div>
                             <div id="dailyAdviceText">正在加载…</div>
                         </div>
                     </div>
@@ -175,8 +180,8 @@
         </div>
     </div>
 
-    <div class="modal fade" id="itemModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+    <div class="modal fade item-modal" id="itemModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 rounded-4 shadow">
                 <div class="modal-header border-0 pb-0">
                     <h2 id="modalTitle" class="modal-title fs-5">新增食材</h2><button type="button" class="btn-close"

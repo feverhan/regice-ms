@@ -53,6 +53,25 @@
         .empty-box { border:1px dashed #c9d8e6; border-radius:12px; background:#fbfdff; color:#586c80; }
         .ai-result { white-space:pre-wrap; border:1px solid #dbe7f1; border-radius:12px; background:#f9fcff; min-height:180px; max-height:460px; overflow:auto; line-height:1.6; }
         .ai-result.is-streaming::after { content:"▍"; animation:blink 1s steps(1) infinite; margin-left:2px; }
+        .item-modal .modal-dialog { max-width: 640px; }
+        .item-modal .modal-content { border-radius: 20px; overflow: hidden; }
+        .item-modal .modal-header { padding: 16px 20px 8px; }
+        .item-modal .modal-body { padding: 14px 20px 18px; }
+        .item-modal .form-label { font-size: .8rem; color: var(--muted); margin-bottom: 6px; font-weight: 700; }
+        .item-modal .form-control,.item-modal .form-select { min-height: 42px; border-radius: 10px; }
+        .item-modal textarea.form-control { min-height: 92px; }
         @keyframes blink { 0%,49%{opacity:1;} 50%,100%{opacity:0;} }
         @media (max-width:991.98px){ .toolbar-filters{grid-template-columns:1fr 1fr;} .hero-actions{grid-template-columns:repeat(3,minmax(0,1fr));} .side{margin-top:14px;} }
-        @media (max-width:575.98px){ .toolbar-filters{grid-template-columns:1fr;} .hero-actions{grid-template-columns:repeat(2,minmax(0,1fr));} .inventory-grid{grid-template-columns:1fr;} }
+        @media (max-width:575.98px){
+            .toolbar-filters{grid-template-columns:1fr;}
+            .hero-actions{grid-template-columns:repeat(2,minmax(0,1fr));}
+            .inventory-grid{grid-template-columns:1fr;}
+            .item-modal .modal-dialog { margin: .4rem; }
+            .item-modal .modal-content { border-radius: 16px; }
+            .item-modal .modal-header { padding: 14px 14px 6px; }
+            .item-modal .modal-body { padding: 10px 14px 14px; }
+            .item-modal .row.g-3 { --bs-gutter-x: .6rem; --bs-gutter-y: .7rem; }
+            .item-modal .form-control,.item-modal .form-select { min-height: 40px; }
+            .item-modal .d-flex.justify-content-end.gap-2.mt-3 { flex-direction: column-reverse; margin-top: 12px !important; }
+            .item-modal .d-flex.justify-content-end.gap-2.mt-3 .btn { width: 100%; }
+        }

@@ -385,11 +385,11 @@ def request_qwen_text(messages, temperature=0.6):
     raise RuntimeError(last_error or "Qwen 调用失败")
 
 
-def get_daily_advice():
+def get_daily_advice(force_refresh=False):
     today = datetime.now().date().isoformat()
     cache = load_daily_advice_cache()
 
-    if cache.get("date") == today and cache.get("advice"):
+    if not force_refresh and cache.get("date") == today and cache.get("advice"):
         return {
             "date": today,
             "advice": cache["advice"],
@@ -691,7 +691,8 @@ def export_data():
 @app.route("/api/daily-advice", methods=["GET"])
 def daily_advice():
     try:
-        return jsonify(get_daily_advice())
+        force_refresh = str(request.args.get("force", "")).strip().lower() in {"1", "true", "yes", "on"}
+        return jsonify(get_daily_advice(force_refresh=force_refresh))
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
 
