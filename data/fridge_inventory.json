@@ -1,0 +1,134 @@
+[
+  {
+    "id": 1774186778096608,
+    "name": "菠萝",
+    "quantity": 0.5,
+    "unit": "个",
+    "category": "水果",
+    "expiry": "",
+    "addedDate": "2026-03-22T13:39:38.096611",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774186753321541,
+    "name": "梨子",
+    "quantity": 3.0,
+    "unit": "个",
+    "category": "水果",
+    "expiry": "",
+    "addedDate": "2026-03-22T13:39:13.321548",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774186709978360,
+    "name": "腊肉",
+    "quantity": 2.0,
+    "unit": "个",
+    "category": "肉类",
+    "expiry": "2026-03-24",
+    "addedDate": "2026-03-22T13:38:29.978366",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774113555376932,
+    "name": "小番茄",
+    "quantity": 2.0,
+    "unit": "盒",
+    "category": "蔬菜",
+    "expiry": "",
+    "addedDate": "2026-03-21T17:19:15.376949",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774113555376998,
+    "name": "青椒",
+    "quantity": 3.0,
+    "unit": "个",
+    "category": "蔬菜",
+    "expiry": "",
+    "addedDate": "2026-03-21T17:19:15.377001",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774113555377028,
+    "name": "土豆",
+    "quantity": 2.0,
+    "unit": "个",
+    "category": "蔬菜",
+    "expiry": "",
+    "addedDate": "2026-03-21T17:19:15.377030",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774113555377052,
+    "name": "娃娃菜",
+    "quantity": 1.0,
+    "unit": "颗",
+    "category": "蔬菜",
+    "expiry": "",
+    "addedDate": "2026-03-21T17:19:15.377053",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774113555377076,
+    "name": "腊肉",
+    "quantity": 1.0,
+    "unit": "斤",
+    "category": "肉类",
+    "expiry": "",
+    "addedDate": "2026-03-21T17:19:15.377075",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774113555377099,
+    "name": "青菜",
+    "quantity": 0.5,
+    "unit": "斤",
+    "category": "蔬菜",
+    "expiry": "",
+    "addedDate": "2026-03-21T17:19:15.377097",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774113555377121,
+    "name": "鸡蛋",
+    "quantity": 5.0,
+    "unit": "颗",
+    "category": "其他",
+    "expiry": "",
+    "addedDate": "2026-03-21T17:19:15.377119",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774113555377152,
+    "name": "香肠",
+    "quantity": 0.5,
+    "unit": "根",
+    "category": "肉类",
+    "expiry": "",
+    "addedDate": "2026-03-21T17:19:15.377151",
+    "minQuantity": 0.0,
+    "note": ""
+  },
+  {
+    "id": 1774113555377195,
+    "name": "泡面",
+    "quantity": 3.0,
+    "unit": "包",
+    "category": "速食",
+    "expiry": "",
+    "addedDate": "2026-03-21T17:19:15.377190",
+    "minQuantity": 0.0,
+    "note": ""
+  }
+]

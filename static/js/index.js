@@ -1,35 +1,398 @@
-﻿let inventory=[]; let stats={total:0,itemCount:0,expiringSoon:0,expired:0,lowStock:0,categories:{},shoppingList:[]}; let itemModal; let recipeAbortController;
-const esc=(v)=>String(v).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;').replaceAll("'",'&#39;');
-const amt=(v)=>{const n=Number(v||0); return Number.isInteger(n)?String(n):n.toFixed(1).replace(/\.0$/,'');};
-const qty=(v,u)=>`${amt(v)} ${u||'个'}`;
-const remind=(v,u)=>Number(v||0)<=0?'不提醒':qty(v,u);
-const step=(u)=>{const n=String(u||'').trim().toLowerCase(); if(['克','g','毫升','ml'].includes(n)) return 50; if(['千克','kg','升','l'].includes(n)) return 0.5; return 1;};
-const statusText=(i)=>i.isExpired?'已过期':(i.isExpiringSoon?`${i.daysUntilExpiry} 天内到期`:((Number(i.minQuantity||0)>0&&i.isLowStock)?'库存偏低':'正常'));
-const expiryText=(i)=>{ if(!i.expiry) return '未设置'; const d=new Date(i.expiry).toLocaleDateString('zh-CN'); if(i.isExpired) return `${d}（已过期）`; if(i.isExpiringSoon) return `${d}（${i.daysUntilExpiry} 天内）`; return d; };
-function showLoadFailure(msg){ const c=document.getElementById('itemList'); if(!c) return; c.innerHTML=`<div class="empty-box text-center p-4" style="grid-column:1 / -1;"><div class="fw-semibold mb-1">加载失败</div><div class="small">${esc(msg||'请检查服务是否正常运行')}</div></div>`; }
-async function loadStats(){ const r=await fetch('/api/stats'); if(!r.ok) throw new Error(`HTTP ${r.status}`); stats=await r.json(); }
-async function loadInventory(){ try{ const s=document.getElementById('sortBy')?.value||'recent'; const r=await fetch(`/api/inventory?sort=${encodeURIComponent(s)}`); if(!r.ok) throw new Error(`HTTP ${r.status}`); inventory=await r.json(); await loadStats(); renderPage(); }catch(e){ console.error(e); showLoadFailure(e.message);} }
-function filtered(){ const q=document.getElementById('searchInput').value.trim().toLowerCase(); const c=document.getElementById('categoryFilter').value; const s=document.getElementById('statusFilter').value; return inventory.filter(i=>{ const note=(i.note||'').toLowerCase(); const mq=!q||i.name.toLowerCase().includes(q)||i.category.toLowerCase().includes(q)||note.includes(q); const mc=!c||i.category===c; let ms=true; if(s==='expired') ms=i.isExpired; else if(s==='warning') ms=i.isExpiringSoon&&!i.isExpired; else if(s==='low') ms=i.isLowStock; else if(s==='normal') ms=!i.isExpired&&!i.isExpiringSoon&&!i.isLowStock; return mq&&mc&&ms; }); }
-function renderStats(){ [['itemCount',stats.itemCount||0],['expiringSoon',stats.expiringSoon||0],['lowStockCount',stats.lowStock||0],['expiredCount',stats.expired||0]].forEach(([id,v])=>{const n=document.getElementById(id); if(n) n.textContent=v;}); }
-function renderCategory(){ const c=document.getElementById('categoryStats'); if(!c) return; const e=Object.entries(stats.categories||{}).sort((a,b)=>b[1]-a[1]); c.innerHTML=e.length?e.map(([n,k])=>`<div class="category-chip">${esc(n)} <strong>${k}</strong></div>`).join(''):'<div class="category-chip">暂无分类统计</div>'; }
-function renderShop(){ const c=document.getElementById('shoppingList'); const l=stats.shoppingList||[]; c.innerHTML=l.length?l.map(i=>`<div class="shopping-item p-2"><div class="fw-semibold mb-1">${esc(i.name)}</div><div class="small text-secondary">当前 ${qty(i.quantity,i.unit)}，提醒值 ${remind(i.minQuantity,i.unit)}</div><div class="small text-secondary">建议补 ${qty(Math.max(i.gap,step(i.unit)),i.unit)}</div></div>`).join(''):'<div class="empty-box text-center p-3 small">暂无需要补货的食材</div>'; }
-function renderItems(items){ const c=document.getElementById('itemList'); if(!items.length){ c.innerHTML='<div class="empty-box text-center p-4" style="grid-column:1 / -1;">没有匹配的食材</div>'; return;} c.innerHTML=items.map(i=>{ const b=[`<span class="badge text-bg-light border">${esc(i.category)}</span>`]; const cls=['inventory-card']; const st=step(i.unit); if(i.isExpired){b.push('<span class="badge text-bg-danger">已过期</span>'); cls.push('expired');} else if(i.isExpiringSoon){b.push('<span class="badge text-bg-warning">即将过期</span>'); cls.push('warning');} if(Number(i.minQuantity||0)>0&&i.isLowStock){b.push('<span class="badge text-bg-primary">低库存</span>'); cls.push('low-stock');}
-return `<article class="${cls.join(' ')}"><div class="d-flex justify-content-between align-items-start gap-2"><div class="inventory-title">${esc(i.name)}</div><div class="d-flex flex-wrap gap-1 justify-content-end">${b.join('')}</div></div><div class="meta-grid"><div class="meta-item"><span class="meta-label">数量</span><span class="meta-value">${qty(i.quantity,i.unit)}</span></div><div class="meta-item"><span class="meta-label">提醒值</span><span class="meta-value">${remind(i.minQuantity,i.unit)}</span></div><div class="meta-item"><span class="meta-label">过期</span><span class="meta-value">${expiryText(i)}</span></div><div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">${statusText(i)}</span></div></div><div class="item-note">${esc(i.note||'无备注')}</div><div class="row g-2 mt-auto"><div class="col-6"><button class="btn btn-sm btn-outline-primary w-100" onclick="adjustQuantity(${i.id},-${st})">消耗 ${amt(st)}</button></div><div class="col-6"><button class="btn btn-sm btn-outline-primary w-100" onclick="adjustQuantity(${i.id},${st})">补货 ${amt(st)}</button></div><div class="col-6"><button class="btn btn-sm btn-light border w-100" onclick="openEditModal(${i.id})">编辑</button></div><div class="col-6"><button class="btn btn-sm btn-outline-danger w-100" onclick="deleteItem(${i.id})">删除</button></div></div></article>`; }).join(''); }
-function renderPage(){ renderStats(); renderCategory(); renderShop(); renderItems(filtered()); }
-function openModal(){ document.getElementById('modalTitle').textContent='新增食材'; document.getElementById('submitBtn').textContent='保存'; document.getElementById('editItemId').value=''; document.getElementById('itemForm').reset(); document.getElementById('itemQuantity').value=1; document.getElementById('itemUnit').value='个'; document.getElementById('itemMinQuantity').value=0; document.getElementById('itemCategory').value='其他'; itemModal.show(); document.getElementById('itemName').focus(); }
-function openEditModal(id){ const i=inventory.find(x=>x.id===id); if(!i) return; document.getElementById('modalTitle').textContent='编辑食材'; document.getElementById('submitBtn').textContent='更新'; document.getElementById('editItemId').value=i.id; document.getElementById('itemName').value=i.name||''; document.getElementById('itemQuantity').value=i.quantity??1; document.getElementById('itemUnit').value=i.unit||'个'; document.getElementById('itemCategory').value=i.category||'其他'; document.getElementById('itemExpiry').value=i.expiry||''; document.getElementById('itemMinQuantity').value=i.minQuantity??0; document.getElementById('itemQuickNote').value=''; document.getElementById('itemNote').value=i.note||''; itemModal.show(); }
-function closeModal(){ itemModal.hide(); }
-async function handleSubmit(e){ e.preventDefault(); const id=document.getElementById('editItemId').value; const p={ name:document.getElementById('itemName').value.trim(), quantity:Number(document.getElementById('itemQuantity').value), unit:(document.getElementById('itemUnit').value||'个').trim(), category:document.getElementById('itemCategory').value, expiry:document.getElementById('itemExpiry').value, minQuantity:Number(document.getElementById('itemMinQuantity').value), note:[document.getElementById('itemQuickNote').value.trim(),document.getElementById('itemNote').value.trim()].filter(Boolean).join('；')}; try{ const r=await fetch(id?`/api/inventory/${id}`:'/api/inventory',{method:id?'PUT':'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)}); const j=await r.json(); if(!r.ok){ alert(j.error||'保存失败'); return;} closeModal(); await loadInventory(); }catch(err){ console.error(err); alert('保存失败，请稍后重试。'); } }
-async function adjustQuantity(id,delta){ try{ const r=await fetch(`/api/inventory/${id}/adjust`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({delta})}); const j=await r.json(); if(!r.ok){ alert(j.error||'更新数量失败'); return;} await loadInventory(); }catch(e){ console.error(e);} }
-async function deleteItem(id){ if(!confirm('确定删除这条记录吗？')) return; try{ const r=await fetch(`/api/inventory/${id}`,{method:'DELETE'}); const j=await r.json(); if(!r.ok){ alert(j.error||'删除失败'); return;} await loadInventory(); }catch(e){ console.error(e);} }
-async function clearExpired(){ if(!confirm('确定清理所有过期食材吗？')) return; try{ const r=await fetch('/api/inventory/clear-expired',{method:'POST'}); const j=await r.json(); if(!r.ok){ alert(j.error||'清理失败'); return;} alert(`已清理 ${j.deleted||0} 条过期记录。`); await loadInventory(); }catch(e){ console.error(e);} }
-async function exportData(){ try{ const r=await fetch('/api/export'); const data=await r.json(); const b=new Blob([JSON.stringify(data,null,2)],{type:'application/json'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`fridge_inventory_${new Date().toISOString().slice(0,10)}.json`; a.click(); URL.revokeObjectURL(u);}catch(e){ console.error(e);} }
-function fillRecipePrompt(v){ const i=document.getElementById('recipeDrawerQuery'); if(i) i.value=v; }
-function fillBulkImportExample(){ const i=document.getElementById('bulkImportText'); if(i) i.value='今天买了2瓶牛奶、1把青菜、3个鸡蛋，鸡蛋下周三到期，辣椒粉1袋放在上层。'; }
-function renderBulkImportResults(items){ if(!items.length) return '<div class="small">本次没有导入任何食材。</div>'; return items.map(i=>`<div class="border rounded-3 p-2 mb-2"><div class="fw-semibold">${esc(i.name)}</div><div class="small text-secondary">${qty(i.quantity,i.unit)} | ${esc(i.category||'其他')} | ${esc(i.expiry||'未设置过期时间')}</div><div class="small text-secondary">${esc(i.note||'无备注')}</div></div>`).join(''); }
-function renderMarkdown(md){ const text=String(md||''); const escaped=esc(text).replace(/\r\n?/g,'\n'); const codeBlocks=[]; let html=escaped.replace(/```([\s\S]*?)```/g,(_,code)=>{ const token=`@@CODEBLOCK_${codeBlocks.length}@@`; codeBlocks.push(`<pre><code>${code.trim()}</code></pre>`); return token; }); html=html.replace(/^---+$/gm,'<hr>'); html=html.replace(/^###\s+(.+)$/gm,'<h3>$1</h3>'); html=html.replace(/^##\s+(.+)$/gm,'<h2>$1</h2>'); html=html.replace(/^#\s+(.+)$/gm,'<h1>$1</h1>'); html=html.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>'); html=html.replace(/`([^`]+?)`/g,'<code>$1</code>'); html=html.replace(/^\s*[-*]\s+(.+)$/gm,'<li>$1</li>'); html=html.replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>').replace(/<\/ul>\s*<ul>/g,''); html=html.split(/\n{2,}/).map(block=>{ const trimmed=block.trim(); if(!trimmed) return ''; if(/^<(h1|h2|h3|ul|pre|hr)/.test(trimmed)) return trimmed; return `<p>${trimmed.replace(/\n/g,'<br>')}</p>`; }).join(''); codeBlocks.forEach((block,idx)=>{ html=html.replace(`@@CODEBLOCK_${idx}@@`,block); }); return html || '<p>没有收到模型输出，请稍后再试。</p>'; }
-async function bulkImportInventory(){ const i=document.getElementById('bulkImportText'); const box=document.getElementById('bulkImportResult'); const btn=document.getElementById('bulkImportSubmitBtn'); const text=i?i.value.trim():''; if(!text){ alert('请先输入要解析的文本。'); return;} btn.disabled=true; box.textContent='正在调用 AI 解析并写入库存…'; try{ const r=await fetch('/api/inventory/bulk-import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})}); const p=await r.json(); if(!r.ok) throw new Error(p.error||'批量录入失败'); const items=Array.isArray(p.items)?p.items:[]; box.innerHTML=renderBulkImportResults(items); i.value=''; await loadInventory(); }catch(e){ console.error(e); box.textContent=`批量录入失败：${e.message}`; }finally{ btn.disabled=false; } }
-async function generateRecipeSuggestions(){ const q=document.getElementById('recipeDrawerQuery'); const box=document.getElementById('recipeDrawerResult'); const btn=document.getElementById('recipeDrawerSubmitBtn'); const query=q?q.value.trim():''; if(recipeAbortController) recipeAbortController.abort(); recipeAbortController=new AbortController(); btn.disabled=true; box.innerHTML=''; box.classList.add('is-streaming'); let markdown=''; try{ const r=await fetch('/api/recipe-suggestions/stream',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query}),signal:recipeAbortController.signal}); if(!r.ok||!r.body) throw new Error(`请求失败: ${r.status}`); const reader=r.body.getReader(); const decoder=new TextDecoder('utf-8'); let buffer=''; while(true){ const {value,done}=await reader.read(); if(done) break; buffer += decoder.decode(value,{stream:true}); const blocks=buffer.split('\n\n'); buffer=blocks.pop()||''; for(const block of blocks){ const dataLine=block.split('\n').find(line=>line.startsWith('data: ')); if(!dataLine) continue; const payload=JSON.parse(dataLine.slice(6)); if(payload.type==='chunk'){ markdown += payload.content; box.innerHTML=renderMarkdown(markdown); box.scrollTop=box.scrollHeight; } else if(payload.type==='error'){ throw new Error(payload.message); } } } if(!markdown.trim()) box.innerHTML='<p>没有收到模型输出，请稍后再试。</p>'; }catch(e){ if(e.name!=='AbortError'){ console.error(e); box.textContent=`生成失败：${e.message}`; }} finally { box.classList.remove('is-streaming'); btn.disabled=false; } }
-function renderDailyAdvice(p){ document.getElementById('dailyAdviceDate').textContent=p.date||''; document.getElementById('dailyAdviceText').textContent=p.advice||'暂无建议'; }
-async function loadDailyAdvice(force=false){ const today=new Date().toISOString().slice(0,10); const key=`dailyAdvice:${today}`; const btn=document.getElementById('refreshDailyAdviceBtn'); if(!force){ const cached=localStorage.getItem(key); if(cached){ renderDailyAdvice(JSON.parse(cached)); return; } } renderDailyAdvice({date:today,advice:force?'正在刷新今日建议…':'正在根据库存生成今日建议…'}); if(btn){ btn.disabled=true; btn.textContent='刷新中…'; } try{ const r=await fetch(`/api/daily-advice${force?'?force=1':''}`); const p=await r.json(); if(!r.ok) throw new Error(p.error||'加载失败'); localStorage.setItem(key,JSON.stringify(p)); renderDailyAdvice(p); }catch(e){ console.error(e); renderDailyAdvice({date:today,advice:`加载失败：${e.message}`}); }finally{ if(btn){ btn.disabled=false; btn.textContent='刷新'; } } }
-document.addEventListener('DOMContentLoaded',()=>{ itemModal=new bootstrap.Modal(document.getElementById('itemModal')); document.getElementById('refreshDailyAdviceBtn')?.addEventListener('click',()=>loadDailyAdvice(true)); loadDailyAdvice(); loadInventory(); });
+﻿const { createApp } = Vue;
+
+const app = createApp({
+  data() {
+    return {
+      categories: ["蔬菜", "水果", "肉类", "海鲜", "乳制品", "饮料", "调料", "主食", "速食", "其他"],
+      inventory: [],
+      stats: { itemCount: 0, expiringSoon: 0, expired: 0, lowStock: 0, categories: {}, shoppingList: [] },
+      filters: { search: "", category: "", status: "", sortBy: "recent" },
+      advice: { date: "", text: "正在加载…" },
+      adviceRefreshing: false,
+      recipe: { query: "", loading: false, markdown: "", rendered: "", canceled: false },
+      bulk: { text: "", loading: false, result: "" },
+      form: { id: "", name: "", quantity: 1, unit: "个", category: "其他", expiry: "", minQuantity: 0, quickNote: "", note: "" },
+      activeTab: "overview",
+      detailItem: null,
+      dialog: { title: "", message: "", mode: "alert", okText: "确定", cancelText: "取消" },
+      itemModal: null,
+      detailModal: null,
+      appDialogModal: null,
+      dialogResolver: null,
+      recipeAbortController: null,
+    };
+  },
+  computed: {
+    sortedCategories() {
+      return Object.fromEntries(Object.entries(this.stats.categories || {}).sort((a, b) => b[1] - a[1]));
+    },
+    filteredItems() {
+      const q = (this.filters.search || "").trim().toLowerCase();
+      return this.inventory.filter((i) => {
+        const note = (i.note || "").toLowerCase();
+        const mq = !q || i.name.toLowerCase().includes(q) || i.category.toLowerCase().includes(q) || note.includes(q);
+        const mc = !this.filters.category || i.category === this.filters.category;
+        let ms = true;
+        if (this.filters.status === "expired") ms = i.isExpired;
+        else if (this.filters.status === "warning") ms = i.isExpiringSoon && !i.isExpired;
+        else if (this.filters.status === "low") ms = i.isLowStock;
+        else if (this.filters.status === "normal") ms = !i.isExpired && !i.isExpiringSoon && !i.isLowStock;
+        return mq && mc && ms;
+      });
+    },
+  },
+  methods: {
+    amt(v) {
+      const n = Number(v || 0);
+      return Number.isInteger(n) ? String(n) : n.toFixed(1).replace(/\.0$/, "");
+    },
+    qty(v, u) {
+      return `${this.amt(v)} ${u || "个"}`;
+    },
+    remind(v, u) {
+      return Number(v || 0) <= 0 ? "不提醒" : this.qty(v, u);
+    },
+    step(u) {
+      const n = String(u || "").trim().toLowerCase();
+      if (["克", "g", "毫升", "ml"].includes(n)) return 50;
+      if (["千克", "kg", "升", "l"].includes(n)) return 0.5;
+      return 1;
+    },
+    expiryText(i) {
+      if (!i.expiry) return "未设置";
+      const d = new Date(i.expiry).toLocaleDateString("zh-CN");
+      if (i.isExpired) return `${d}（已过期）`;
+      if (i.isExpiringSoon) return `${d}（${i.daysUntilExpiry} 天内）`;
+      return d;
+    },
+    statusText(i) {
+      if (i.isExpired) return "已过期";
+      if (i.isExpiringSoon) return `${i.daysUntilExpiry} 天内到期`;
+      if (Number(i.minQuantity || 0) > 0 && i.isLowStock) return "库存偏低";
+      return "正常";
+    },
+    openDetailModal(item) {
+      this.detailItem = item ? { ...item } : null;
+      this.detailModal.show();
+    },
+    closeDetailModal() {
+      this.detailModal.hide();
+    },
+    async showAlert(message, title = "提示", okText = "确定") {
+      this.dialog = { ...this.dialog, title, message, mode: "alert", okText, cancelText: "取消" };
+      this.appDialogModal.show();
+      return new Promise((resolve) => {
+        this.dialogResolver = resolve;
+      });
+    },
+    async showConfirm(message, title = "请确认", okText = "确定", cancelText = "取消") {
+      this.dialog = { ...this.dialog, title, message, mode: "confirm", okText, cancelText };
+      this.appDialogModal.show();
+      return new Promise((resolve) => {
+        this.dialogResolver = resolve;
+      });
+    },
+    resolveDialog(result) {
+      this.appDialogModal.hide();
+      if (this.dialogResolver) {
+        this.dialogResolver(result);
+        this.dialogResolver = null;
+      }
+    },
+    esc(v) {
+      return String(v)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+    },
+    renderMarkdown(md) {
+      const text = String(md || "");
+      const escaped = this.esc(text).replace(/\r\n?/g, "\n");
+      const codeBlocks = [];
+      let html = escaped.replace(/```([\s\S]*?)```/g, (_, code) => {
+        const token = `@@CODEBLOCK_${codeBlocks.length}@@`;
+        codeBlocks.push(`<pre><code>${code.trim()}</code></pre>`);
+        return token;
+      });
+      html = html.replace(/^---+$/gm, "<hr>");
+      html = html.replace(/^###\s+(.+)$/gm, "<h3>$1</h3>");
+      html = html.replace(/^##\s+(.+)$/gm, "<h2>$1</h2>");
+      html = html.replace(/^#\s+(.+)$/gm, "<h1>$1</h1>");
+      html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+      html = html.replace(/`([^`]+?)`/g, "<code>$1</code>");
+      html = html.replace(/^\s*[-*]\s+(.+)$/gm, "<li>$1</li>");
+      html = html.replace(/(<li>[\s\S]*?<\/li>)/g, "<ul>$1</ul>").replace(/<\/ul>\s*<ul>/g, "");
+      html = html
+        .split(/\n{2,}/)
+        .map((block) => {
+          const trimmed = block.trim();
+          if (!trimmed) return "";
+          if (/^<(h1|h2|h3|ul|pre|hr)/.test(trimmed)) return trimmed;
+          return `<p>${trimmed.replace(/\n/g, "<br>")}</p>`;
+        })
+        .join("");
+      codeBlocks.forEach((block, idx) => {
+        html = html.replace(`@@CODEBLOCK_${idx}@@`, block);
+      });
+      return html || "<p>没有收到模型输出，请稍后再试。</p>";
+    },
+    async loadStats() {
+      const r = await fetch("/api/stats");
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      this.stats = await r.json();
+    },
+    async loadInventory() {
+      try {
+        const r = await fetch(`/api/inventory?sort=${encodeURIComponent(this.filters.sortBy)}`);
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        this.inventory = await r.json();
+        await this.loadStats();
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async loadDailyAdvice(force = false) {
+      const today = new Date().toISOString().slice(0, 10);
+      const key = `dailyAdvice:${today}`;
+      if (!force) {
+        const cached = localStorage.getItem(key);
+        if (cached) {
+          const p = JSON.parse(cached);
+          this.advice = { date: p.date || "", text: p.advice || "暂无建议" };
+          return;
+        }
+      }
+      this.adviceRefreshing = true;
+      this.advice = { date: today, text: force ? "正在刷新今日建议…" : "正在根据库存生成今日建议…" };
+      try {
+        const r = await fetch(`/api/daily-advice${force ? "?force=1" : ""}`);
+        const p = await r.json();
+        if (!r.ok) throw new Error(p.error || "加载失败");
+        localStorage.setItem(key, JSON.stringify(p));
+        this.advice = { date: p.date || "", text: p.advice || "暂无建议" };
+      } catch (e) {
+        console.error(e);
+        this.advice = { date: today, text: `加载失败：${e.message}` };
+      } finally {
+        this.adviceRefreshing = false;
+      }
+    },
+    openModal() {
+      this.form = { id: "", name: "", quantity: 1, unit: "个", category: "其他", expiry: "", minQuantity: 0, quickNote: "", note: "" };
+      this.itemModal.show();
+    },
+    openEditModal(id) {
+      const i = this.inventory.find((x) => x.id === id);
+      if (!i) return;
+      this.form = { id: i.id, name: i.name || "", quantity: i.quantity ?? 1, unit: i.unit || "个", category: i.category || "其他", expiry: i.expiry || "", minQuantity: i.minQuantity ?? 0, quickNote: "", note: i.note || "" };
+      if (this.detailModal && document.getElementById("detailModal")?.classList.contains("show")) {
+        const detailEl = document.getElementById("detailModal");
+        const handleHidden = () => {
+          this.itemModal.show();
+          detailEl.removeEventListener("hidden.bs.offcanvas", handleHidden);
+        };
+        detailEl.addEventListener("hidden.bs.offcanvas", handleHidden);
+        this.closeDetailModal();
+        return;
+      }
+      this.itemModal.show();
+    },
+    closeModal() {
+      this.itemModal.hide();
+    },
+    async handleSubmit() {
+      const payload = {
+        name: this.form.name.trim(),
+        quantity: Number(this.form.quantity),
+        unit: (this.form.unit || "个").trim(),
+        category: this.form.category,
+        expiry: this.form.expiry,
+        minQuantity: Number(this.form.minQuantity),
+        note: [this.form.quickNote.trim(), this.form.note.trim()].filter(Boolean).join("；"),
+      };
+      try {
+        const id = this.form.id;
+        const r = await fetch(id ? `/api/inventory/${id}` : "/api/inventory", {
+          method: id ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        const j = await r.json();
+        if (!r.ok) {
+          await this.showAlert(j.error || "保存失败");
+          return;
+        }
+        this.closeModal();
+        await this.loadInventory();
+      } catch (e) {
+        console.error(e);
+        await this.showAlert("保存失败，请稍后重试。");
+      }
+    },
+    async adjustQuantity(id, delta) {
+      try {
+        const r = await fetch(`/api/inventory/${id}/adjust`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ delta }),
+        });
+        const j = await r.json();
+        if (!r.ok) {
+          await this.showAlert(j.error || "更新数量失败");
+          return;
+        }
+        if (this.detailItem && this.detailItem.id === id) {
+          this.detailItem = { ...this.detailItem, ...j };
+        }
+        await this.loadInventory();
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async deleteItem(id) {
+      if (!(await this.showConfirm("确定删除这条记录吗？", "删除确认", "删除"))) return;
+      try {
+        const r = await fetch(`/api/inventory/${id}`, { method: "DELETE" });
+        const j = await r.json();
+        if (!r.ok) {
+          await this.showAlert(j.error || "删除失败");
+          return;
+        }
+        await this.loadInventory();
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async clearExpired() {
+      if (!(await this.showConfirm("确定清理所有过期食材吗？", "批量清理确认", "清理"))) return;
+      try {
+        const r = await fetch("/api/inventory/clear-expired", { method: "POST" });
+        const j = await r.json();
+        if (!r.ok) {
+          await this.showAlert(j.error || "清理失败");
+          return;
+        }
+        await this.showAlert(`已清理 ${j.deleted || 0} 条过期记录。`, "清理完成");
+        await this.loadInventory();
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    async exportData() {
+      try {
+        const r = await fetch("/api/export");
+        const data = await r.json();
+        const b = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const u = URL.createObjectURL(b);
+        const a = document.createElement("a");
+        a.href = u;
+        a.download = `fridge_inventory_${new Date().toISOString().slice(0, 10)}.json`;
+        a.click();
+        URL.revokeObjectURL(u);
+      } catch (e) {
+        console.error(e);
+      }
+    },
+    renderBulkImportResults(items) {
+      if (!items.length) return '<div class="small">本次没有导入任何食材。</div>';
+      return items
+        .map((i) => `<div class="border rounded-3 p-2 mb-2"><div class="fw-semibold">${this.esc(i.name)}</div><div class="small text-secondary">${this.qty(i.quantity, i.unit)} | ${this.esc(i.category || "其他")} | ${this.esc(i.expiry || "未设置过期时间")}</div><div class="small text-secondary">${this.esc(i.note || "无备注")}</div></div>`)
+        .join("");
+    },
+    async bulkImportInventory() {
+      if (!this.bulk.text.trim()) {
+        await this.showAlert("请先输入要解析的文本。");
+        return;
+      }
+      this.bulk.loading = true;
+      this.bulk.result = "正在调用 AI 解析并写入库存…";
+      try {
+        const r = await fetch("/api/inventory/bulk-import", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: this.bulk.text.trim() }),
+        });
+        const p = await r.json();
+        if (!r.ok) throw new Error(p.error || "批量录入失败");
+        const items = Array.isArray(p.items) ? p.items : [];
+        this.bulk.result = this.renderBulkImportResults(items);
+        this.bulk.text = "";
+        await this.loadInventory();
+      } catch (e) {
+        console.error(e);
+        this.bulk.result = `批量录入失败：${this.esc(e.message)}`;
+      } finally {
+        this.bulk.loading = false;
+      }
+    },
+    async generateRecipeSuggestions() {
+      if (this.recipeAbortController) this.recipeAbortController.abort();
+      this.recipeAbortController = new AbortController();
+      this.recipe.loading = true;
+      this.recipe.canceled = false;
+      this.recipe.markdown = "";
+      this.recipe.rendered = "";
+      try {
+        const r = await fetch("/api/recipe-suggestions/stream", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: (this.recipe.query || "").trim() }),
+          signal: this.recipeAbortController.signal,
+        });
+        if (!r.ok || !r.body) throw new Error(`请求失败: ${r.status}`);
+        const reader = r.body.getReader();
+        const decoder = new TextDecoder("utf-8");
+        let buffer = "";
+        while (true) {
+          const { value, done } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+          const blocks = buffer.split("\n\n");
+          buffer = blocks.pop() || "";
+          for (const block of blocks) {
+            const dataLine = block.split("\n").find((line) => line.startsWith("data: "));
+            if (!dataLine) continue;
+            const payload = JSON.parse(dataLine.slice(6));
+            if (payload.type === "chunk") {
+              this.recipe.markdown += payload.content;
+              this.recipe.rendered = this.renderMarkdown(this.recipe.markdown);
+            } else if (payload.type === "error") {
+              throw new Error(payload.message);
+            }
+          }
+        }
+        if (!this.recipe.markdown.trim()) this.recipe.rendered = "<p>没有收到模型输出，请稍后再试。</p>";
+      } catch (e) {
+        if (e.name === "AbortError") {
+          if (this.recipe.canceled) {
+            this.recipe.rendered = "<p>已停止生成。</p>";
+          }
+        } else {
+          console.error(e);
+          this.recipe.rendered = `<p>生成失败：${this.esc(e.message)}</p>`;
+        }
+      } finally {
+        this.recipe.loading = false;
+        this.recipeAbortController = null;
+      }
+    },
+    cancelRecipeGeneration() {
+      if (!this.recipe.loading || !this.recipeAbortController) return;
+      this.recipe.canceled = true;
+      this.recipeAbortController.abort();
+    },
+  },
+  async mounted() {
+    this.itemModal = new bootstrap.Offcanvas(document.getElementById("itemModal"));
+    this.detailModal = new bootstrap.Offcanvas(document.getElementById("detailModal"));
+    this.appDialogModal = new bootstrap.Modal(document.getElementById("appDialogModal"));
+    await Promise.all([this.loadInventory(), this.loadDailyAdvice(false)]);
+  },
+});
+
+app.config.compilerOptions.delimiters = ["[[", "]]" ];
+app.mount("#app");
+
+

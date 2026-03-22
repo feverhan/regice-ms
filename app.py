@@ -11,7 +11,7 @@ load_dotenv()
 
 app = Flask(__name__)
 QWEN_API_KEY = os.getenv("QWEN_API_KEY") or os.getenv("DASHSCOPE_API_KEY")
-QWEN_MODEL = os.getenv("QWEN_MODEL", "qwen-plus")
+QWEN_MODEL = os.getenv("QWEN_MODEL", "qwen3.5-plus")
 QWEN_BASE_URLS = [
     url.strip()
     for url in os.getenv(
@@ -23,8 +23,8 @@ QWEN_BASE_URLS = [
     ).split(",")
     if url.strip()
 ]
-DATA_FILE = os.getenv("DATA_FILE", "fridge_inventory.json")
-DAILY_ADVICE_CACHE_FILE = os.getenv("DAILY_ADVICE_CACHE_FILE", "daily_advice_cache.json")
+DATA_FILE = "/data/fridge_inventory.json"
+DAILY_ADVICE_CACHE_FILE = "/data/daily_advice_cache.json"
 DEFAULT_CATEGORY = "其他"
 
 
@@ -116,7 +116,7 @@ def normalize_item(item):
         "category": str(item.get("category") or DEFAULT_CATEGORY).strip() or DEFAULT_CATEGORY,
         "expiry": item.get("expiry", "") or "",
         "addedDate": item.get("addedDate") or datetime.now().isoformat(),
-        "minQuantity": max(float(item.get("minQuantity", 1) or 1), 0),
+        "minQuantity": max(float(item.get("minQuantity", 0) or 0), 0),
         "note": str(item.get("note", "")).strip(),
     }
 
@@ -165,11 +165,11 @@ def parse_item_payload(data, partial=False):
 
     if "minQuantity" in data or not partial:
         try:
-            min_quantity = float(data.get("minQuantity", 1))
+            min_quantity = float(data.get("minQuantity", 0))
         except (TypeError, ValueError) as exc:
             raise ValueError("库存提醒阈值必须是整数") from exc
         if min_quantity < 0:
-            raise ValueError("库存提醒阈值必须大于 0")
+            raise ValueError("库存提醒阈值不能小于 0")
         payload["minQuantity"] = min_quantity
 
     if "note" in data or not partial:
@@ -265,20 +265,22 @@ def build_inventory_snapshot():
 
 
 def build_recipe_prompt(user_query):
+    today = datetime.now().date().isoformat()
     inventory_text = json.dumps(build_inventory_snapshot(), ensure_ascii=False, indent=2)
 
     return [
         {
             "role": "system",
             "content": (
-                "你是一名家庭做饭助手。你必须基于用户当前库存给出实用、节省食材、可执行、健康低脂的做菜建议。"
-                "请严格按库存中的数量和单位理解食材，不能忽略单位。"
-                "优先使用快过期食材，绝对不要建议食用已过期食材。如果食材不足以做成一道菜，可以考虑额外买入食材，但是尽量以已有食材为主。"
-                "请尽量给出家常菜，不要编造库存里已经有的食材。"
-                "调料类默认家里常备，但在制作方法里需要说明。"
-                "输出必须使用简体中文，并严格包含这些部分：菜名、可直接使用的现有食材、还缺少的食材、简要做法、备注。内容尽量格式排版清晰。"
-                "请给出2到3个建议，每个建议的简要做法控制在3到6步。"
-                "这是单轮功能，不要反问用户，不要要求补充信息，不要再问是否需要购物清单。信息不足时，直接基于库存做出合理假设并给出完整答案。"
+                "你是一名家庭做饭助手，请直接给出可执行的做菜建议。"
+                "优先使用快过期食材，绝对不要建议食用已过期食材；食材不足时可少量补充购买。"
+                "严格按库存中的数量和单位用料，不要编造库存里已有食材。"
+                "以本地常见家常菜为主，菜系优先江浙菜、川湘菜、鲁菜；避免生硬或不常见搭配。"
+                "烹饪方法仅限：蒸、煮、炒、凉拌、空气炸锅。"
+                "调料默认家里常备，但做法里要写清楚。"
+                f"今天日期是 {today}，若用户提到今天/明天/后天，按对应日期安排食材优先级。"
+                "用简体中文输出2到3个菜，每个菜包含：菜名、现有食材、缺少食材（必须/可选）、3到6步做法、备注。"
+                "只输出做菜建议本身，不要写分析过程，不要写“根据字段/根据库存数据/根据系统信息”等无关内容，不要反问。"
             ),
         },
         {

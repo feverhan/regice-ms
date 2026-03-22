@@ -11,237 +11,387 @@
 </head>
 
 <body>
-    <div class="container-fluid py-4">
-        <div class="page-shell mx-auto">
-            <section class="hero p-4 mb-3">
-                <div class="row g-3 align-items-center">
-                    <div class="col-lg-8">
-                        <div class="small opacity-75 mb-1"><i class="fas fa-snowflake"></i> 冰箱管理台</div>
-                        <h1 class="h3 mb-2">冰箱库存管理系统</h1>
-                        <p class="mb-0">管理库存、监控临期、AI 做菜建议与批量录入。</p>
-                        <div id="dailyAdviceBox" class="daily-advice">
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <div class="d-flex align-items-center gap-2">
-                                    <strong>今日饮食建议</strong>
-                                    <button id="refreshDailyAdviceBtn" type="button" class="btn btn-sm btn-light py-0 px-2">刷新</button>
-                                </div>
-                                <span id="dailyAdviceDate" class="small opacity-75"></span>
+    <div id="app" class="app-shell" v-cloak>
+        <div class="app-bg"></div>
+
+        <main class="mobile-pages">
+            <section class="page-view" v-show="activeTab==='overview'">
+                <header class="hero-panel">
+                    <div class="hero-copy">
+                        <div class="hero-brand">
+                            <span class="brand-mark"><i class="fas fa-snowflake"></i></span>
+                            <div>
+                                <div class="hero-kicker">Fridge Flow</div>
                             </div>
-                            <div id="dailyAdviceText">正在加载…</div>
                         </div>
                     </div>
-                    <div class="col-lg-4">
-                        <div class="hero-actions">
-                            <button class="hero-app-btn" onclick="openModal()"><span class="hero-app-icon"><i
-                                        class="fas fa-plus"></i></span><span class="hero-app-label">新增</span></button>
-                            <button class="hero-app-btn" data-bs-toggle="offcanvas" data-bs-target="#bulkImportDrawer"
-                                aria-controls="bulkImportDrawer"><span class="hero-app-icon"><i
-                                        class="fas fa-wand-magic-sparkles"></i></span><span
-                                    class="hero-app-label">批量录入</span></button>
-                            <button class="hero-app-btn" data-bs-toggle="offcanvas" data-bs-target="#recipeDrawer"
-                                aria-controls="recipeDrawer"><span class="hero-app-icon"><i
-                                        class="fas fa-robot"></i></span><span class="hero-app-label">AI
-                                    做菜</span></button>
-                            <button class="hero-app-btn" onclick="exportData()"><span class="hero-app-icon"><i
-                                        class="fas fa-download"></i></span><span
-                                    class="hero-app-label">导出</span></button>
-                            <button class="hero-app-btn" onclick="clearExpired()"><span class="hero-app-icon"><i
-                                        class="fas fa-trash"></i></span><span
-                                    class="hero-app-label">清理过期</span></button>
-                        </div>
-                    </div>
-                </div>
-            </section>
 
-            <section class="toolbar mb-3">
-                <h2 class="toolbar-title">快速搜索库存</h2>
-                <div class="toolbar-filters">
-                    <div class="toolbar-field"><label class="field-label" for="searchInput">关键词</label>
-                        <div class="search-input-wrap"><i class="fas fa-magnifying-glass search-icon"></i><input
-                                id="searchInput" type="text" class="form-control" placeholder="搜索食材名称、分类或备注"
-                                oninput="renderPage()"></div>
+                    <div class="hero-metrics">
+                        <article class="metric-tile cool">
+                            <span class="metric-label">库存项</span>
+                            <strong class="metric-value">[[ stats.itemCount ]]</strong>
+                            <span class="metric-foot">总计</span>
+                        </article>
+                        <article class="metric-tile amber">
+                            <span class="metric-label">临期</span>
+                            <strong class="metric-value">[[ stats.expiringSoon ]]</strong>
+                            <span class="metric-foot">3天内</span>
+                        </article>
+                        <article class="metric-tile coral">
+                            <span class="metric-label">过期</span>
+                            <strong class="metric-value">[[ stats.expired ]]</strong>
+                            <span class="metric-foot">待清理</span>
+                        </article>
+                        <article class="metric-tile mint">
+                            <span class="metric-label">低库存</span>
+                            <strong class="metric-value">[[ stats.lowStock ]]</strong>
+                            <span class="metric-foot">待补货</span>
+                        </article>
                     </div>
-                    <div class="toolbar-field"><label class="field-label" for="categoryFilter">分类</label><select
-                            id="categoryFilter" class="form-select" onchange="renderPage()">
-                            <option value="">全部分类</option>
-                            <option value="蔬菜">蔬菜</option>
-                            <option value="水果">水果</option>
-                            <option value="肉类">肉类</option>
-                            <option value="海鲜">海鲜</option>
-                            <option value="乳制品">乳制品</option>
-                            <option value="饮料">饮料</option>
-                            <option value="调料">调料</option>
-                            <option value="主食">主食</option>
-                            <option value="速食">速食</option>
-                            <option value="其他">其他</option>
-                        </select></div>
-                    <div class="toolbar-field"><label class="field-label" for="statusFilter">状态</label><select
-                            id="statusFilter" class="form-select" onchange="renderPage()">
-                            <option value="">全部状态</option>
-                            <option value="expired">已过期</option>
-                            <option value="warning">即将过期</option>
-                            <option value="low">低库存</option>
-                            <option value="normal">正常</option>
-                        </select></div>
-                    <div class="toolbar-field"><label class="field-label" for="sortBy">排序</label><select id="sortBy"
-                            class="form-select" onchange="loadInventory()">
-                            <option value="recent">按最近添加</option>
-                            <option value="status">按状态优先</option>
-                            <option value="expiry">按过期时间</option>
-                            <option value="quantity_desc">按数量从高到低</option>
-                            <option value="quantity_asc">按数量从低到高</option>
-                            <option value="name">按名称</option>
-                            <option value="category">按分类</option>
-                        </select></div>
-                </div>
-            </section>
 
-            <div class="row g-3 align-items-start">
-                <div class="col-lg-9">
-                    <section class="panel p-3">
-                        <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h2 class="h5 mb-0">库存列表</h2>
+                    <div class="hero-actions">
+                        <button class="action-chip primary-action" @click="openModal"><i class="fas fa-plus"></i><span>新增</span></button>
+                        <button class="action-chip" data-bs-toggle="offcanvas" data-bs-target="#bulkImportDrawer"><i class="fas fa-wand-magic-sparkles"></i><span>录入</span></button>
+                        <button class="action-chip" data-bs-toggle="offcanvas" data-bs-target="#recipeDrawer"><i class="fas fa-robot"></i><span>菜谱</span></button>
+                        <button class="action-chip" @click="exportData"><i class="fas fa-download"></i><span>导出</span></button>
+                        <button class="action-chip danger-action" @click="clearExpired"><i class="fas fa-trash"></i><span>清理</span></button>
+                    </div>
+
+                    <section class="advice-strip">
+                        <div class="advice-head">
+                            <div>
+                                <div class="panel-caption">今日建议</div>
+                            </div>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="advice-date">[[ advice.date || '' ]]</span>
+                                <button type="button" class="mini-refresh" :disabled="adviceRefreshing" @click="loadDailyAdvice(true)">
+                                    [[ adviceRefreshing ? '刷新中...' : '刷新' ]]
+                                </button>
+                            </div>
                         </div>
-                        <div class="mb-2">
-                            <h3 class="h6 mb-2">分类分布</h3>
-                            <div id="categoryStats" class="d-flex flex-wrap gap-2"></div>
-                        </div>
-                        <div id="itemList" class="inventory-grid"></div>
+                        <p class="advice-text mb-0">[[ advice.text || '暂无建议' ]]</p>
                     </section>
-                </div>
-                <div class="col-lg-3">
-                    <aside class="side p-3 position-sticky" style="top:20px;">
-                        <div class="stats-strip">
-                            <div class="stat-tile"><span class="stat-icon"><i class="fas fa-box-open"></i></span>
-                                <div>
-                                    <div class="stat-label">库存</div>
-                                    <div class="stat-value" id="itemCount">0</div>
-                                </div>
-                            </div>
-                            <div class="stat-tile"><span class="stat-icon"><i class="fas fa-hourglass-half"></i></span>
-                                <div>
-                                    <div class="stat-label">临期</div>
-                                    <div class="stat-value" id="expiringSoon">0</div>
-                                </div>
-                            </div>
-                            <div class="stat-tile"><span class="stat-icon"><i
-                                        class="fas fa-triangle-exclamation"></i></span>
-                                <div>
-                                    <div class="stat-label">低库存</div>
-                                    <div class="stat-value" id="lowStockCount">0</div>
-                                </div>
-                            </div>
-                            <div class="stat-tile"><span class="stat-icon"><i class="fas fa-ban"></i></span>
-                                <div>
-                                    <div class="stat-label">过期</div>
-                                    <div class="stat-value" id="expiredCount">0</div>
-                                </div>
+                </header>
+
+                <section class="page-stack">
+                    <section class="panel-block">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-caption">分类概览</div>
+                                <h2 class="panel-title">库存分布</h2>
                             </div>
                         </div>
+                        <div class="category-flow overview-flow">
+                            <div v-if="Object.keys(stats.categories).length===0" class="category-pill muted">暂无分类统计</div>
+                            <div v-for="(v,k) in sortedCategories" :key="k" class="category-pill">
+                                <span>[[ k ]]</span>
+                                <strong>[[ v ]]</strong>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="panel-block assistant-block">
+                        <div class="panel-header">
+                            <div>
+                                <div class="panel-caption">AI 功能</div>
+                                <h2 class="panel-title">智能辅助</h2>
+                            </div>
+                        </div>
+                        <div class="assistant-links">
+                            <button class="assistant-link" data-bs-toggle="offcanvas" data-bs-target="#bulkImportDrawer">
+                                <i class="fas fa-list-check"></i>
+                                <span>自然语言批量录入</span>
+                            </button>
+                            <button class="assistant-link" data-bs-toggle="offcanvas" data-bs-target="#recipeDrawer">
+                                <i class="fas fa-utensils"></i>
+                                <span>根据库存生成菜谱</span>
+                            </button>
+                        </div>
+                    </section>
+                </section>
+            </section>
+
+            <section class="page-view" v-show="activeTab==='inventory'">
+                <section class="panel-block controls-panel">
+                    <div class="panel-header">
                         <div>
-                            <h2 class="h6 mb-1">补货建议</h2>
-                            <p class="small text-secondary mb-2">只显示已开启提醒且低于阈值的食材。</p>
-                            <div id="shoppingList" class="d-grid gap-2"></div>
+                            <div class="panel-caption">筛选与排序</div>
+                            <h2 class="panel-title">库存搜索</h2>
                         </div>
-                    </aside>
+                        <div class="panel-hint">共 [[ filteredItems.length ]] 条</div>
+                    </div>
+                    <div class="controls-grid">
+                        <label class="field-block field-search">
+                            <span class="field-label">关键词</span>
+                            <span class="search-wrap">
+                                <i class="fas fa-magnifying-glass"></i>
+                                <input v-model.trim="filters.search" type="text" class="form-control" placeholder="搜索名称、分类或备注">
+                            </span>
+                        </label>
+                        <label class="field-block">
+                            <span class="field-label">分类</span>
+                            <select v-model="filters.category" class="form-select">
+                                <option value="">全部分类</option>
+                                <option v-for="c in categories" :key="c" :value="c">[[ c ]]</option>
+                            </select>
+                        </label>
+                        <label class="field-block">
+                            <span class="field-label">状态</span>
+                            <select v-model="filters.status" class="form-select">
+                                <option value="">全部状态</option>
+                                <option value="expired">已过期</option>
+                                <option value="warning">即将过期</option>
+                                <option value="low">低库存</option>
+                                <option value="normal">正常</option>
+                            </select>
+                        </label>
+                        <label class="field-block">
+                            <span class="field-label">排序</span>
+                            <select v-model="filters.sortBy" class="form-select" @change="loadInventory">
+                                <option value="recent">按最近添加</option>
+                                <option value="status">按状态优先</option>
+                                <option value="expiry">按过期时间</option>
+                                <option value="quantity_desc">按数量从高到低</option>
+                                <option value="quantity_asc">按数量从低到高</option>
+                                <option value="name">按名称</option>
+                                <option value="category">按分类</option>
+                            </select>
+                        </label>
+                    </div>
+                </section>
+
+                <section class="panel-block inventory-panel">
+                    <div class="panel-header inventory-header">
+                        <div>
+                            <div class="panel-caption">工作区</div>
+                            <h2 class="panel-title">库存列表</h2>
+                        </div>
+                        <button class="mini-refresh" type="button" @click="openModal">新增食材</button>
+                    </div>
+
+                    <div class="inventory-grid">
+                        <template v-if="filteredItems.length">
+                            <article v-for="i in filteredItems" :key="i.id" class="inventory-card"
+                                role="button" tabindex="0" @click="openDetailModal(i)" @keydown.enter.prevent="openDetailModal(i)"
+                                :class="{warning:i.isExpiringSoon&&!i.isExpired,expired:i.isExpired,'low-stock':i.isLowStock}">
+                                <div class="card-accent"></div>
+                                <div class="item-topline compact-topline">
+                                    <div class="item-main">
+                                        <div class="inventory-title">[[ i.name ]]</div>
+                                        <div class="inventory-subtitle">[[ i.category ]] · [[ qty(i.quantity,i.unit) ]]</div>
+                                    </div>
+                                    <div class="compact-side">
+                                        <div class="badge-stack">
+                                            <span v-if="i.isExpired" class="state-badge expired-badge">已过期</span>
+                                            <span v-else-if="i.isExpiringSoon" class="state-badge warning-badge">即将过期</span>
+                                            <span v-if="Number(i.minQuantity||0)>0&&i.isLowStock" class="state-badge low-badge">低库存</span>
+                                            <span v-if="!i.isExpired && !i.isExpiringSoon && !(Number(i.minQuantity||0)>0&&i.isLowStock)" class="state-badge normal-badge">正常</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </article>
+                        </template>
+                        <div v-else class="empty-box">没有匹配的食材，试试调整筛选条件。</div>
+                    </div>
+                </section>
+            </section>
+
+            <section class="page-view" v-show="activeTab==='purchase'">
+                <section class="panel-block side-block">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-caption">补货</div>
+                            <h2 class="panel-title">采购建议</h2>
+                        </div>
+                    </div>
+                    <div class="shopping-stack">
+                        <div v-if="!stats.shoppingList.length" class="empty-box small-empty">暂无需要补货的食材</div>
+                        <article v-for="s in stats.shoppingList" :key="s.id" class="shopping-item">
+                            <div class="shopping-name">[[ s.name ]]</div>
+                            <div class="shopping-meta">当前 [[ qty(s.quantity,s.unit) ]]</div>
+                            <div class="shopping-meta">提醒值 [[ remind(s.minQuantity,s.unit) ]]</div>
+                            <div class="shopping-gap">建议补 [[ qty(Math.max(s.gap,step(s.unit)),s.unit) ]]</div>
+                        </article>
+                    </div>
+                </section>
+
+                <section class="panel-block assistant-block">
+                    <div class="panel-header">
+                        <div>
+                            <div class="panel-caption">快捷操作</div>
+                            <h2 class="panel-title">采购与导出</h2>
+                        </div>
+                    </div>
+                    <div class="assistant-links">
+                        <button class="assistant-link" @click="exportData">
+                            <i class="fas fa-download"></i>
+                            <span>导出库存数据</span>
+                        </button>
+                        <button class="assistant-link" @click="clearExpired">
+                            <i class="fas fa-trash"></i>
+                            <span>清理过期食材</span>
+                        </button>
+                    </div>
+                </section>
+            </section>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-tab" :class="{active:activeTab==='overview'}" @click="activeTab='overview'">
+                <i class="fas fa-chart-pie"></i>
+                <span>总览</span>
+            </button>
+            <button class="nav-tab" :class="{active:activeTab==='inventory'}" @click="activeTab='inventory'">
+                <i class="fas fa-box-open"></i>
+                <span>库存</span>
+            </button>
+            <button class="nav-tab" :class="{active:activeTab==='purchase'}" @click="activeTab='purchase'">
+                <i class="fas fa-cart-shopping"></i>
+                <span>采购</span>
+            </button>
+        </nav>
+
+        <div class="offcanvas offcanvas-bottom drawer-modern ai-drawer" tabindex="-1" id="recipeDrawer">
+            <div class="offcanvas-header">
+                <button type="button" class="drawer-back-btn" data-bs-dismiss="offcanvas" aria-label="返回">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>返回</span>
+                </button>
+                <h2 class="offcanvas-title h5 mb-0">AI 做菜建议</h2>
+            </div>
+            <div class="offcanvas-body d-grid gap-3 ai-drawer-body">
+                <textarea v-model="recipe.query" class="form-control bulk-input ai-query-input" rows="6" placeholder="例如：今晚做两人晚饭，优先消耗快过期食材"></textarea>
+                <div class="d-flex gap-2 flex-wrap bulk-actions align-items-center ai-actions">
+                    <button class="btn btn-sm btn-primary bulk-primary-btn" :disabled="recipe.loading" @click="generateRecipeSuggestions">
+                        <span v-if="recipe.loading" class="loading-dot"></span>
+                        [[ recipe.loading ? '生成中...' : '生成建议' ]]
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary bulk-ghost-btn" :disabled="recipe.loading" @click="recipe.query='推荐2道优先消耗临期食材的家常菜'">使用示例</button>
+                    <button v-if="recipe.loading" class="btn btn-sm btn-outline-danger bulk-ghost-btn" type="button" @click="cancelRecipeGeneration">停止生成</button>
                 </div>
+                <div v-if="recipe.loading" class="ai-progress" role="status" aria-live="polite">
+                    <span class="loading-dot"></span>
+                    <span>正在生成建议，请稍候…</span>
+                </div>
+                <div class="ai-result p-3 bulk-result ai-stream-result" :class="{'is-streaming':recipe.loading}" :aria-busy="recipe.loading ? 'true' : 'false'" v-html="recipe.rendered || 'AI 会在这里输出菜名、现有食材、缺少食材和简要做法。'"></div>
             </div>
         </div>
-    </div>
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="recipeDrawer" aria-labelledby="recipeDrawerLabel">
-        <div class="offcanvas-header">
-            <div>
-                <h2 class="offcanvas-title h5 mb-1" id="recipeDrawerLabel">AI 做菜建议</h2>
-                <p class="text-secondary mb-0">单次提问，返回完整建议。</p>
-            </div><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body d-grid gap-2"><textarea id="recipeDrawerQuery" class="form-control" rows="5"
-                placeholder="例如：今晚做两人晚饭，优先消耗快过期食材"></textarea>
-            <div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" id="recipeDrawerSubmitBtn"
-                    onclick="generateRecipeSuggestions()">生成建议</button><button class="btn btn-outline-secondary"
-                    onclick="fillRecipePrompt('推荐2道优先消耗临期食材的家常菜')">使用示例</button></div>
-            <div class="ai-result p-3" id="recipeDrawerResult">AI 会在这里输出菜名、现有食材、缺少食材和简要做法。</div>
-        </div>
-    </div>
 
-    <div class="offcanvas offcanvas-end" tabindex="-1" id="bulkImportDrawer" aria-labelledby="bulkImportDrawerLabel">
-        <div class="offcanvas-header">
-            <div>
-                <h2 class="offcanvas-title h5 mb-1" id="bulkImportDrawerLabel">AI 批量录入</h2>
-                <p class="text-secondary mb-0">输入文本，自动解析并新增到库存。</p>
-            </div><button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-        </div>
-        <div class="offcanvas-body d-grid gap-2"><textarea id="bulkImportText" class="form-control" rows="8"
-                placeholder="例如：今天买了2瓶牛奶、1把青菜、3个鸡蛋，鸡蛋下周三到期。"></textarea>
-            <div class="d-flex gap-2 flex-wrap"><button class="btn btn-primary" id="bulkImportSubmitBtn"
-                    onclick="bulkImportInventory()">解析并入库</button><button class="btn btn-outline-secondary"
-                    type="button" onclick="fillBulkImportExample()">填入示例</button></div>
-            <div class="ai-result p-3" id="bulkImportResult">这里会显示本次导入摘要。</div>
-        </div>
-    </div>
-
-    <div class="modal fade item-modal" id="itemModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-            <div class="modal-content border-0 rounded-4 shadow">
-                <div class="modal-header border-0 pb-0">
-                    <h2 id="modalTitle" class="modal-title fs-5">新增食材</h2><button type="button" class="btn-close"
-                        aria-label="Close" onclick="closeModal()"></button>
+        <div class="offcanvas offcanvas-bottom drawer-modern ai-drawer" tabindex="-1" id="bulkImportDrawer">
+            <div class="offcanvas-header">
+                <button type="button" class="drawer-back-btn" data-bs-dismiss="offcanvas" aria-label="返回">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>返回</span>
+                </button>
+                <h2 class="offcanvas-title h5 mb-0">AI 批量录入</h2>
+            </div>
+            <div class="offcanvas-body d-grid gap-3 ai-drawer-body">
+                <textarea v-model="bulk.text" class="form-control bulk-input ai-query-input" rows="6" placeholder="例如：今天买了2瓶牛奶、1把青菜、3个鸡蛋，鸡蛋下周三到期。"></textarea>
+                <div class="d-flex gap-2 flex-wrap bulk-actions align-items-center ai-actions">
+                    <button class="btn btn-sm btn-primary bulk-primary-btn" :disabled="bulk.loading" @click="bulkImportInventory">[[ bulk.loading ? '解析中...' : '解析并入库' ]]</button>
+                    <button class="btn btn-sm btn-outline-secondary bulk-ghost-btn" type="button" @click="bulk.text='今天买了2瓶牛奶、1把青菜、3个鸡蛋，鸡蛋下周三到期，辣椒粉1袋放在上层。'">填入示例</button>
                 </div>
-                <div class="modal-body pt-3">
-                    <form id="itemForm" onsubmit="handleSubmit(event)"><input type="hidden" id="editItemId">
-                        <div class="row g-3">
-                            <div class="col-sm-6"><label for="itemName" class="form-label">食材名称</label><input
-                                    id="itemName" type="text" class="form-control" required></div>
-                            <div class="col-sm-3"><label for="itemQuantity" class="form-label">数量</label><input
-                                    id="itemQuantity" type="number" class="form-control" min="0" step="0.1" required
-                                    value="1"></div>
-                            <div class="col-sm-3" id="itemUnitCol"><label for="itemUnit"
-                                    class="form-label">单位</label><input id="itemUnit" type="text" class="form-control"
-                                    list="unitOptions" value="个" placeholder="个/把/袋/瓶"><datalist id="unitOptions">
-                                    <option value="个"></option>
-                                    <option value="把"></option>
-                                    <option value="袋"></option>
-                                    <option value="瓶"></option>
-                                    <option value="盒"></option>
-                                    <option value="包"></option>
-                                    <option value="克"></option>
-                                    <option value="千克"></option>
-                                    <option value="毫升"></option>
-                                    <option value="升"></option>
-                                </datalist></div>
-                            <div class="col-sm-6"><label for="itemCategory" class="form-label">分类</label><select
-                                    id="itemCategory" class="form-select">
-                                    <option value="蔬菜">蔬菜</option>
-                                    <option value="水果">水果</option>
-                                    <option value="肉类">肉类</option>
-                                    <option value="海鲜">海鲜</option>
-                                    <option value="乳制品">乳制品</option>
-                                    <option value="饮料">饮料</option>
-                                    <option value="调料">调料</option>
-                                    <option value="主食">主食</option>
-                                    <option value="速食">速食</option>
-                                    <option value="其他" selected>其他</option>
-                                </select></div>
-                            <div class="col-sm-6"><label for="itemExpiry" class="form-label">过期日期</label><input
-                                    id="itemExpiry" type="date" class="form-control"></div>
-                            <div class="col-sm-6"><label for="itemMinQuantity"
-                                    class="form-label">提醒值（0=不提醒）</label><input id="itemMinQuantity" type="number"
-                                    class="form-control" min="0" step="0.1" required value="0"></div>
-                            <div class="col-sm-6"><label for="itemQuickNote" class="form-label">简短备注</label><input
-                                    id="itemQuickNote" type="text" class="form-control" placeholder="可选"></div>
-                            <div class="col-12"><label for="itemNote" class="form-label">详细备注</label><textarea
-                                    id="itemNote" class="form-control" rows="3" placeholder="可选"></textarea></div>
+                <div class="ai-result p-3 bulk-result ai-stream-result" v-html="bulk.result || '这里会显示本次导入摘要。'"></div>
+            </div>
+        </div>
+
+        <div class="offcanvas offcanvas-bottom item-modal item-drawer" id="itemModal" tabindex="-1" aria-hidden="true">
+            <div class="sheet-grab"></div>
+            <div class="offcanvas-header border-0 pb-0 item-modal-header">
+                <button type="button" class="modal-back-btn" aria-label="返回" @click="closeModal">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="item-title-wrap">
+                    <h2 class="modal-title fs-5 mb-0">[[ form.id ? '编辑食材' : '新增食材' ]]</h2>
+                </div>
+            </div>
+            <div class="offcanvas-body pt-3">
+                <form @submit.prevent="handleSubmit">
+                    <div class="row g-3">
+                        <div class="col-sm-6"><label class="form-label">食材名称</label><input v-model.trim="form.name" type="text" class="form-control" required></div>
+                        <div class="col-sm-3"><label class="form-label">数量</label><input v-model.number="form.quantity" type="number" class="form-control" min="0" step="0.1" required></div>
+                        <div class="col-sm-3"><label class="form-label">单位</label><input v-model.trim="form.unit" type="text" class="form-control" list="unitOptions" placeholder="个/把/袋/瓶"></div>
+                        <datalist id="unitOptions"><option value="个"></option><option value="把"></option><option value="袋"></option><option value="瓶"></option><option value="盒"></option><option value="包"></option><option value="克"></option><option value="千克"></option><option value="毫升"></option><option value="升"></option></datalist>
+                        <div class="col-sm-6"><label class="form-label">分类</label><select v-model="form.category" class="form-select"><option v-for="c in categories" :key="c" :value="c">[[ c ]]</option></select></div>
+                        <div class="col-sm-6"><label class="form-label">过期日期</label><input v-model="form.expiry" type="date" class="form-control"></div>
+                        <div class="col-sm-6"><label class="form-label">提醒值（0=不提醒）</label><input v-model.number="form.minQuantity" type="number" class="form-control" min="0" step="0.1" required></div>
+                        <div class="col-sm-6"><label class="form-label">简短备注</label><input v-model.trim="form.quickNote" type="text" class="form-control" placeholder="可选"></div>
+                        <div class="col-12"><label class="form-label">详细备注</label><textarea v-model.trim="form.note" class="form-control" rows="3" placeholder="可选"></textarea></div>
+                    </div>
+                    <div class="d-flex justify-content-end gap-2 mt-3"><button type="button" class="btn btn-light border" @click="closeModal">取消</button><button type="submit" class="btn btn-primary">保存</button></div>
+                </form>
+            </div>
+        </div>
+
+        <div class="offcanvas offcanvas-bottom detail-modal detail-drawer" id="detailModal" tabindex="-1" aria-hidden="true">
+            <div class="sheet-grab"></div>
+            <div class="offcanvas-header border-0 pb-0 detail-modal-header">
+                <button type="button" class="modal-back-btn" aria-label="返回" @click="closeDetailModal">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div class="detail-title-wrap">
+                    <div class="panel-caption mb-1">库存详情</div>
+                    <h2 class="modal-title fs-5 mb-0">[[ detailItem ? detailItem.name : '' ]]</h2>
+                </div>
+            </div>
+            <div class="offcanvas-body pt-3" v-if="detailItem">
+                        <div class="detail-status-row">
+                            <span class="state-badge expired-badge" v-if="detailItem.isExpired">已过期</span>
+                            <span class="state-badge warning-badge" v-else-if="detailItem.isExpiringSoon">即将过期</span>
+                            <span class="state-badge low-badge" v-if="Number(detailItem.minQuantity||0)>0&&detailItem.isLowStock">低库存</span>
+                            <span class="state-badge normal-badge" v-if="!detailItem.isExpired && !detailItem.isExpiringSoon && !(Number(detailItem.minQuantity||0)>0&&detailItem.isLowStock)">正常</span>
                         </div>
-                        <div class="d-flex justify-content-end gap-2 mt-3"><button type="button"
-                                class="btn btn-light border" onclick="closeModal()">取消</button><button type="submit"
-                                class="btn btn-primary" id="submitBtn">保存</button></div>
-                    </form>
+
+                        <div class="detail-grid">
+                            <div class="meta-item"><span class="meta-label">分类</span><span class="meta-value">[[ detailItem.category ]]</span></div>
+                            <div class="meta-item"><span class="meta-label">当前数量</span><span class="meta-value">[[ qty(detailItem.quantity,detailItem.unit) ]]</span></div>
+                            <div class="meta-item"><span class="meta-label">提醒值</span><span class="meta-value">[[ remind(detailItem.minQuantity,detailItem.unit) ]]</span></div>
+                            <div class="meta-item"><span class="meta-label">过期日期</span><span class="meta-value">[[ expiryText(detailItem) ]]</span></div>
+                            <div class="meta-item"><span class="meta-label">状态</span><span class="meta-value">[[ statusText(detailItem) ]]</span></div>
+                        </div>
+
+                        <div class="note-strip detail-note" v-if="detailItem.note">[[ detailItem.note ]]</div>
+
+                        <div class="item-actions-grid detail-actions">
+                            <button class="mini-action pale" @click="adjustQuantity(detailItem.id,-step(detailItem.unit))">
+                                <i class="fas fa-minus"></i>
+                                <span>减少</span>
+                            </button>
+                            <button class="mini-action fill" @click="adjustQuantity(detailItem.id,step(detailItem.unit))">
+                                <i class="fas fa-plus"></i>
+                                <span>增加</span>
+                            </button>
+                            <button class="mini-action" @click="openEditModal(detailItem.id)">
+                                <i class="fas fa-pen"></i>
+                                <span>编辑</span>
+                            </button>
+                            <button class="mini-action danger" @click="deleteItem(detailItem.id)">
+                                <i class="fas fa-trash"></i>
+                                <span>删除</span>
+                            </button>
+                        </div>
+            </div>
+        </div>
+
+        <div class="modal fade" id="appDialogModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">[[ dialog.title ]]</h5>
+                        <button type="button" class="btn-close" @click="resolveDialog(false)"></button>
+                    </div>
+                    <div class="modal-body">[[ dialog.message ]]</div>
+                    <div class="modal-footer">
+                        <button v-if="dialog.mode==='confirm'" type="button" class="btn btn-light border" @click="resolveDialog(false)">[[ dialog.cancelText || '取消' ]]</button>
+                        <button type="button" class="btn btn-primary" @click="resolveDialog(true)">[[ dialog.okText || '确定' ]]</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{{ url_for('static', filename='js/vue.global.prod.js') }}"></script>
     <script src="{{ url_for('static', filename='js/index.js') }}"></script>
 </body>
 
