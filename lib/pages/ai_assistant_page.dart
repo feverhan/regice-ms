@@ -66,9 +66,9 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
   bool _sending = false;
 
   static const List<String> _promptPresets = <String>[
-    '根据当前库存，安排一顿适合两个人的晚餐。',
-    '优先消耗 3 天内到期的食材，给我 2 套做法。',
-    '我想吃低脂高蛋白，结合现有食材给我一份菜单。',
+    '按现有食材安排一顿两人晚餐。',
+    '优先用掉 3 天内到期的食材，给我两套做法。',
+    '想吃低脂高蛋白，按库存给我一份菜单。',
   ];
 
   @override
@@ -77,7 +77,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
     _messages = <_AiMessage>[
       const _AiMessage(
         role: _AiMessageRole.assistant,
-        text: '我已经拿到你当前的库存情况。你可以直接问我今晚吃什么、怎么优先消耗临期食材，或者让我按人数、口味和做菜难度给你出方案。',
+        text: '我已经看过当前库存。直接告诉我人数、口味、忌口或可用时间，我会按现有食材帮你安排今天吃什么。',
         includeInContext: false,
       ),
     ];
@@ -109,7 +109,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
 
     final prompt = (preset ?? _controller.text).trim();
     if (prompt.isEmpty) {
-      _showSnack('先输入一个问题，我再开始帮你想菜谱。');
+      _showSnack('先告诉我你的需求，我再开始帮你安排。');
       return;
     }
 
@@ -155,14 +155,14 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
               final lastIndex = _messages.length - 1;
               final last = _messages[lastIndex];
               _messages[lastIndex] = last.copyWith(
-                text: last.text.trim().isEmpty ? '生成失败：$error' : last.text,
+                text: last.text.trim().isEmpty ? '这次没顺利完成：$error' : last.text,
                 isStreaming: false,
                 isError: true,
               );
               _sending = false;
             });
             _streamSubscription = null;
-            _showSnack('这次回答没有完整生成，可以重试一次。');
+            _showSnack('这次回答被打断了，可以再试一次。');
           },
           onDone: () {
             if (!mounted) {
@@ -172,7 +172,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
               final lastIndex = _messages.length - 1;
               final last = _messages[lastIndex];
               _messages[lastIndex] = last.copyWith(
-                text: last.text.trim().isEmpty ? '这次没有收到有效内容，你可以换个问法再试。' : last.text,
+                text: last.text.trim().isEmpty ? '这次没整理出可用内容，换个说法再试试。' : last.text,
                 isStreaming: false,
               );
               _sending = false;
@@ -217,7 +217,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       final lastIndex = _messages.length - 1;
       final last = _messages[lastIndex];
       _messages[lastIndex] = last.copyWith(
-        text: last.text.trim().isEmpty ? '已停止生成。' : '${last.text}\n\n_已停止生成_',
+        text: last.text.trim().isEmpty ? '这次回答已暂停。' : '${last.text}\n\n_本次回答已暂停_',
         isStreaming: false,
       );
       _sending = false;
@@ -235,7 +235,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
       _messages = <_AiMessage>[
         const _AiMessage(
           role: _AiMessageRole.assistant,
-          text: '新的对话已经开始。继续告诉我你的目标，比如人数、口味、忌口或想优先消耗的食材。',
+          text: '已开始新对话。告诉我人数、口味、忌口，或者想优先处理哪些食材，我就继续帮你安排。',
           includeInContext: false,
         ),
       ];
@@ -278,14 +278,14 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
           children: [
             Text('AI 厨房助手', style: theme.textTheme.titleLarge),
             Text(
-              '边聊边出方案，支持 Markdown 和流式生成',
+              '按现有食材安排一日三餐',
               style: theme.textTheme.bodySmall,
             ),
           ],
         ),
         actions: [
           IconButton(
-            tooltip: '新对话',
+            tooltip: '重新开始',
             onPressed: _resetConversation,
             icon: const Icon(Icons.refresh_rounded),
           ),
@@ -325,7 +325,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
-                            '我会结合库存给出更像“对话”而不是“结果弹窗”的建议体验。',
+                            '告诉我这顿饭想怎么吃，我会结合现有食材帮你安排菜单、做法和备菜顺序。',
                             style: theme.textTheme.titleMedium?.copyWith(color: const Color(0xFF22352C)),
                           ),
                         ),
@@ -336,11 +336,11 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        _ContextChip(label: '库存 ${widget.items.length} 项'),
-                        _ContextChip(label: '临期 $_expiringSoonCount 项'),
-                        _ContextChip(label: '低库存 $_lowStockCount 项'),
+                        _ContextChip(label: '现有食材 ${widget.items.length} 项'),
+                        _ContextChip(label: '快到期 $_expiringSoonCount 项'),
+                        _ContextChip(label: '补货提醒 $_lowStockCount 项'),
                         if (priorityIngredients.isNotEmpty)
-                          _ContextChip(label: '重点食材 ${priorityIngredients.join('、')}'),
+                          _ContextChip(label: '优先处理 ${priorityIngredients.join('、')}'),
                       ],
                     ),
                   ],
@@ -406,7 +406,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
                               if (!mounted) {
                                 return;
                               }
-                              _showSnack('已复制回答内容。');
+                              _showSnack('回答已复制。');
                             }
                           : null,
                     ),
@@ -432,15 +432,15 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
                         maxLines: 6,
                         textCapitalization: TextCapitalization.sentences,
                         decoration: InputDecoration(
-                          hintText: '例如：给我安排一顿 20 分钟内能完成、优先消耗鸡蛋和番茄的晚餐。',
+                          hintText: '例如：晚饭两个人吃，30 分钟内完成，优先用掉鸡蛋和番茄。',
                           suffixIcon: _sending
                               ? IconButton(
-                                  tooltip: '停止生成',
+                                  tooltip: '暂停回答',
                                   onPressed: _stopStreaming,
                                   icon: const Icon(Icons.stop_circle_outlined),
                                 )
                               : IconButton(
-                                  tooltip: '发送',
+                                  tooltip: '发送问题',
                                   onPressed: () => _sendPrompt(),
                                   icon: const Icon(Icons.arrow_upward_rounded),
                                 ),
@@ -451,7 +451,7 @@ class _AiAssistantPageState extends State<AiAssistantPage> {
                         children: [
                           Expanded(
                             child: Text(
-                              _sending ? '正在流式生成回答…' : '我会结合当前库存继续上下文对话。',
+                              _sending ? '正在整理这顿饭的方案…' : '支持连续追问，我会接着上文继续帮你安排。',
                               style: theme.textTheme.bodySmall,
                             ),
                           ),
@@ -555,7 +555,7 @@ class _MessageBubble extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                isUser ? '你' : 'AI 助手',
+                isUser ? '你' : '厨房助手',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       color: isUser ? Colors.white70 : const Color(0xFF6A7268),
                       fontWeight: FontWeight.w700,
@@ -572,7 +572,7 @@ class _MessageBubble extends StatelessWidget {
                 )
               else
                 MarkdownBody(
-                  data: message.text.isEmpty ? '正在思考中…' : message.text,
+                  data: message.text.isEmpty ? '正在整理思路…' : message.text,
                   selectable: true,
                   styleSheet: markdownStyleSheet,
                 ),
@@ -590,14 +590,14 @@ class _MessageBubble extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '流式生成中',
+                          '正在整理中',
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                       ] else if (onCopy != null) ...[
                         TextButton.icon(
                           onPressed: onCopy,
                           icon: const Icon(Icons.content_copy_rounded, size: 16),
-                          label: const Text('复制'),
+                          label: const Text('复制回答'),
                         ),
                       ],
                     ],

@@ -49,19 +49,19 @@ class InventoryItem {
   }) {
     final cleanName = name.trim();
     if (cleanName.isEmpty) {
-      throw Exception('请填写食材名称。');
+      throw Exception('还没有填写食材名称。');
     }
     final quantity = _parseDouble(quantityText);
     if (quantity <= 0) {
-      throw Exception('数量必须大于 0。');
+      throw Exception('数量需要大于 0。');
     }
     final minQuantity = _parseDouble(minQuantityText);
     if (minQuantity < 0) {
-      throw Exception('低库存提醒线不能小于 0。');
+      throw Exception('低库存提醒不能小于 0。');
     }
     final cleanExpiry = expiry.trim();
     if (cleanExpiry.isNotEmpty && DateTime.tryParse(cleanExpiry) == null) {
-      throw Exception('到期日请使用 YYYY-MM-DD 格式。');
+      throw Exception('到期日请使用 YYYY-MM-DD 格式填写。');
     }
     return InventoryItem(
       id: base?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
@@ -162,12 +162,12 @@ class InventoryItem {
       return expiry.isEmpty ? '已过期' : '已过期 · $expiry';
     }
     if (isExpiringSoon) {
-      return expiry.isEmpty ? '即将到期' : '即将到期 · $expiry';
+      return expiry.isEmpty ? '快到期' : '快到期 · 建议在 $expiry 前用完';
     }
     if (isLowStock) {
-      return '库存偏低';
+      return '库存不足';
     }
-    return expiry.isEmpty ? '状态正常' : '状态正常 · $expiry 前食用';
+    return expiry.isEmpty ? '可正常使用' : '建议在 $expiry 前食用';
   }
 
   static String formatNumber(double value) {

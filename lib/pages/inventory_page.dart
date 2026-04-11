@@ -55,13 +55,13 @@ class InventoryPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('筛选与查找', style: theme.textTheme.titleMedium),
+                Text('查找食材', style: theme.textTheme.titleMedium),
                 const SizedBox(height: 10),
                 TextField(
                   controller: searchController,
                   decoration: const InputDecoration(
                     prefixIcon: Icon(Icons.search),
-                    hintText: '搜索食材、分类或备注',
+                    hintText: '搜索名称、分类或备注',
                     border: OutlineInputBorder(),
                   ),
                 ),
@@ -72,9 +72,9 @@ class InventoryPage extends StatelessWidget {
                       child: DropdownField(
                         value: sortKey,
                         items: const {
-                          'recent': '最近添加',
-                          'status': '状态优先',
-                          'expiry': '按到期日',
+                          'recent': '最新添加',
+                          'status': '按状态',
+                          'expiry': '临期优先',
                           'quantity_desc': '数量从多到少',
                           'quantity_asc': '数量从少到多',
                           'name': '按名称',
@@ -88,11 +88,11 @@ class InventoryPage extends StatelessWidget {
                       child: DropdownField(
                         value: statusFilter,
                         items: const {
-                          '': '全部状态',
+                          '': '全部',
                           'expired': '已过期',
-                          'warning': '即将到期',
-                          'low': '库存偏低',
-                          'normal': '状态正常',
+                          'warning': '快到期',
+                          'low': '库存不足',
+                          'normal': '可正常使用',
                         },
                         onChanged: onStatusChanged,
                       ),
@@ -114,12 +114,13 @@ class InventoryPage extends StatelessWidget {
         ),
         Expanded(
           child: items.isEmpty
-              ? const Center(child: Text('没有匹配的食材，换个关键词试试。'))
+              ? const Center(child: Text('没有找到匹配的食材，换个关键词试试。'))
               : ListView.builder(
                   padding: EdgeInsets.fromLTRB(padding, 0, padding, 120),
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final item = items[index];
+                    final stepLabel = '${InventoryItem.formatNumber(item.defaultStep)}${item.unit}';
                     return Card(
                       margin: EdgeInsets.only(bottom: gap),
                       child: Padding(
@@ -146,8 +147,8 @@ class InventoryPage extends StatelessWidget {
                               spacing: 8,
                               runSpacing: 8,
                               children: [
-                                OutlinedButton(onPressed: () => onDecrement(item), child: const Text('-1')),
-                                OutlinedButton(onPressed: () => onIncrement(item), child: const Text('+1')),
+                                OutlinedButton(onPressed: () => onDecrement(item), child: Text('减少 $stepLabel')),
+                                OutlinedButton(onPressed: () => onIncrement(item), child: Text('补充 $stepLabel')),
                                 TextButton(onPressed: () => onEdit(item), child: const Text('编辑')),
                                 TextButton(onPressed: () => onDelete(item), child: const Text('删除')),
                               ],

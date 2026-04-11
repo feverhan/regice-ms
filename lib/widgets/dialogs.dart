@@ -49,28 +49,28 @@ class _ItemEditorDialogState extends State<ItemEditorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.item == null ? '新增食材' : '编辑食材'),
+      title: Text(widget.item == null ? '添加食材' : '编辑食材'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             _input(_nameController, '食材名称'),
             const SizedBox(height: 8),
-            _input(_quantityController, '数量', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
+            _input(_quantityController, '当前数量', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
             const SizedBox(height: 8),
             _input(_unitController, '单位'),
             const SizedBox(height: 8),
             _input(_categoryController, '分类'),
             const SizedBox(height: 8),
-            _input(_expiryController, '到期日 YYYY-MM-DD'),
+            _input(_expiryController, '到期日（YYYY-MM-DD）'),
             const SizedBox(height: 8),
             _input(
               _minQuantityController,
-              '低库存提醒线',
+              '低库存提醒',
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
             const SizedBox(height: 8),
-            _input(_noteController, '备注', maxLines: 3),
+            _input(_noteController, '备注（选填）', maxLines: 3),
           ],
         ),
       ),
@@ -148,18 +148,18 @@ class _SettingsDialogState extends State<SettingsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('AI 设置'),
+      title: const Text('AI 助手设置'),
       content: SingleChildScrollView(
         child: Column(
           children: [
             TextField(
               controller: _apiKeyController,
-              decoration: const InputDecoration(labelText: 'API 密钥', border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: 'API Key', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _modelController,
-              decoration: const InputDecoration(labelText: '模型名称', border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: '模型', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -168,7 +168,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
               maxLines: 5,
               decoration: const InputDecoration(
                 labelText: '接口地址',
-                hintText: '每行填写一个接口地址',
+                hintText: '支持填写多个地址，每行一个',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -257,7 +257,7 @@ class OutputDialog extends StatelessWidget {
       title: Text(title),
       content: SingleChildScrollView(child: SelectableText(content)),
       actions: [
-        FilledButton(onPressed: () => Navigator.pop(context), child: const Text('关闭')),
+        FilledButton(onPressed: () => Navigator.pop(context), child: const Text('知道了')),
       ],
     );
   }

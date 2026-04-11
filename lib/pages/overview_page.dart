@@ -36,7 +36,7 @@ class OverviewPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('今日厨房提醒', style: Theme.of(context).textTheme.bodySmall),
+              Text('今日饮食建议', style: Theme.of(context).textTheme.bodySmall),
               const SizedBox(height: 8),
               Text(
                 advice,
@@ -48,20 +48,20 @@ class OverviewPage extends StatelessWidget {
                   Expanded(
                     child: FilledButton(
                       onPressed: onGenerateRecipes,
-                      child: const Text('AI 问答'),
+                      child: const Text('厨房助手'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton.filledTonal(
                     onPressed: () => onRefreshAdvice(force: true),
                     icon: const Icon(Icons.refresh_rounded),
-                    tooltip: '刷新建议',
+                    tooltip: '换一条建议',
                   ),
                   const SizedBox(width: 8),
                   IconButton.filledTonal(
                     onPressed: onBulkImport,
                     icon: const Icon(Icons.auto_awesome_rounded),
-                    tooltip: '批量导入',
+                    tooltip: '识别清单',
                   ),
                 ],
               ),
@@ -69,7 +69,7 @@ class OverviewPage extends StatelessWidget {
           ),
         ),
         SizedBox(height: gap),
-        Text('库存概览', style: Theme.of(context).textTheme.titleLarge),
+        Text('库存一览', style: Theme.of(context).textTheme.titleLarge),
         const SizedBox(height: 10),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -79,10 +79,10 @@ class OverviewPage extends StatelessWidget {
               spacing: columnGap,
               runSpacing: columnGap,
               children: [
-                StatCard(label: '食材总数', value: '${stats.itemCount}', color: const Color(0xFF315947), width: width),
-                StatCard(label: '临期提醒', value: '${stats.expiringSoon}', color: const Color(0xFFB26A1D), width: width),
+                StatCard(label: '现有食材', value: '${stats.itemCount}', color: const Color(0xFF315947), width: width),
+                StatCard(label: '快到期', value: '${stats.expiringSoon}', color: const Color(0xFFB26A1D), width: width),
                 StatCard(label: '已过期', value: '${stats.expired}', color: const Color(0xFFB14242), width: width),
-                StatCard(label: '待补货', value: '${stats.lowStock}', color: const Color(0xFF176B67), width: width),
+                StatCard(label: '补货提醒', value: '${stats.lowStock}', color: const Color(0xFF176B67), width: width),
               ],
             );
           },
@@ -94,10 +94,10 @@ class OverviewPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('分类汇总', style: Theme.of(context).textTheme.titleMedium),
+                Text('分类数量', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 if (stats.categoryTotals.isEmpty)
-                  const Text('还没有录入食材，先从常用食材开始吧。')
+                  const Text('还没有食材记录，先添加几样常用食材吧。')
                 else
                   ...stats.categoryTotals.entries.map(
                     (entry) => Padding(

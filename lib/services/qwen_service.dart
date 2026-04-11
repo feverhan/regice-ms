@@ -84,10 +84,10 @@ class QwenService {
     required List<Map<String, String>> messages,
   }) async {
     if (settings.apiKey.trim().isEmpty) {
-      throw Exception('缺少 API 密钥。');
+      throw Exception('还没有配置 API 密钥。');
     }
 
-    String lastError = '请求失败。';
+    String lastError = '请求没有成功。';
     for (final url in settings.baseUrls) {
       try {
         final response = await http.post(
@@ -111,7 +111,7 @@ class QwenService {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;
         final choices = decoded['choices'] as List<dynamic>? ?? <dynamic>[];
         if (choices.isEmpty) {
-          throw Exception('模型未返回内容。');
+          throw Exception('这次没有拿到可用回复。');
         }
         final message = choices.first['message'] as Map<String, dynamic>? ?? <String, dynamic>{};
         final content = message['content'];
@@ -124,7 +124,7 @@ class QwenService {
               .join()
               .trim();
         }
-        throw Exception('模型返回格式无效。');
+        throw Exception('返回内容格式不正确。');
       } catch (error) {
         lastError = '$error';
       }
@@ -138,7 +138,7 @@ class QwenService {
     required List<Map<String, String>> messages,
   }) {
     if (settings.apiKey.trim().isEmpty) {
-      return Stream<String>.error(Exception('缺少 API 密钥。'));
+      return Stream<String>.error(Exception('还没有配置 API 密钥。'));
     }
 
     late final StreamController<String> controller;
@@ -146,7 +146,7 @@ class QwenService {
     var canceled = false;
 
     Future<void> run() async {
-      var lastError = '请求失败。';
+      var lastError = '请求没有成功。';
 
       try {
         for (final url in settings.baseUrls) {
@@ -317,7 +317,7 @@ class QwenService {
         }
       }
     }
-    throw Exception('AI 返回内容里没有找到有效 JSON。');
+    throw Exception('没有从 AI 返回内容里解析出有效数据。');
   }
 
   bool _tryParse(String value) {

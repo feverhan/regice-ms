@@ -30,7 +30,7 @@ class ShoppingPage extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onClearExpired,
                   icon: const Icon(Icons.delete_outline),
-                  label: const Text('清理过期'),
+                  label: const Text('清理过期食材'),
                 ),
               ),
               const SizedBox(width: 8),
@@ -38,7 +38,7 @@ class ShoppingPage extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: onExport,
                   icon: const Icon(Icons.download_outlined),
-                  label: const Text('导出清单'),
+                  label: const Text('导出补货单'),
                 ),
               ),
             ],
@@ -46,7 +46,7 @@ class ShoppingPage extends StatelessWidget {
         ),
         Expanded(
           child: shoppingItems.isEmpty
-              ? const Center(child: Text('目前没有需要补货的食材。'))
+              ? const Center(child: Text('当前不需要补货。'))
               : ListView.builder(
                   padding: EdgeInsets.fromLTRB(padding, 0, padding, 120),
                   itemCount: shoppingItems.length,
@@ -69,10 +69,10 @@ class ShoppingPage extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(height: 6),
-                            Text('当前库存 ${item.quantityLabel}'),
-                            Text('提醒阈值 ${item.minQuantityLabel}'),
+                            Text('现有库存 ${item.quantityLabel}'),
+                            Text('补货阈值 ${item.minQuantityLabel}'),
                             const SizedBox(height: 6),
-                            Text('建议补货 ${InventoryItem.formatNumber(gap)}${item.unit}'),
+                            Text('建议补充 ${InventoryItem.formatNumber(gap)}${item.unit}'),
                           ],
                         ),
                       ),
