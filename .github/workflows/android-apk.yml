@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Flutter APK
 
 on:
   workflow_dispatch:
@@ -7,44 +7,44 @@ on:
       - main
       - master
     paths:
+      - "lib/**"
       - "android/**"
+      - "pubspec.yaml"
+      - "analysis_options.yaml"
       - ".github/workflows/android-apk.yml"
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
 
-    defaults:
-      run:
-        working-directory: android
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-          cache: gradle
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
 
-      - name: Install Android SDK packages
-        run: |
-          sdkmanager "platform-tools" "platforms;android-34" "build-tools;34.0.0"
+      - name: Flutter pub get
+        run: flutter pub get
 
-      - name: Make Gradle executable
-        run: chmod +x ./gradlew
+      - name: Analyze Dart code
+        run: flutter analyze
 
       - name: Build debug APK
-        run: ./gradlew clean assembleDebug
+        run: flutter build apk --debug
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: regice-ms-debug-apk
-          path: android/app/build/outputs/apk/debug/app-debug.apk
+          name: fridge-inventory-debug-apk
+          path: build/app/outputs/flutter-apk/app-debug.apk
           if-no-files-found: error
