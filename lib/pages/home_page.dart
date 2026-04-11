@@ -7,6 +7,7 @@ import '../services/inventory_store.dart';
 import '../services/qwen_service.dart';
 import '../services/settings_repository.dart';
 import '../widgets/dialogs.dart';
+import 'ai_assistant_page.dart';
 import 'inventory_page.dart';
 import 'overview_page.dart';
 import 'shopping_page.dart';
@@ -124,7 +125,9 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (context) => ItemEditorDialog(item: item),
     );
-    if (edited == null) return;
+    if (edited == null) {
+      return;
+    }
 
     setState(() {
       final index = _items.indexWhere((entry) => entry.id == edited.id);
@@ -139,18 +142,26 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _deleteItem(InventoryItem item) async {
     final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
+          context: context,
+          builder: (context) => AlertDialog(
             title: const Text('删除食材'),
             content: Text('确认删除“${item.name}”吗？'),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
-              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('删除')),
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('删除'),
+              ),
             ],
           ),
         ) ??
         false;
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     setState(() {
       _items.removeWhere((entry) => entry.id == item.id);
@@ -160,7 +171,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _adjustQuantity(InventoryItem item, double delta) async {
     final index = _items.indexWhere((entry) => entry.id == item.id);
-    if (index < 0) return;
+    if (index < 0) {
+      return;
+    }
     final next = (_items[index].quantity + delta).clamp(0, double.infinity).toDouble();
     setState(() {
       _items[index] = _items[index].copyWith(quantity: next);
@@ -170,18 +183,26 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _clearExpired() async {
     final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
+          context: context,
+          builder: (context) => AlertDialog(
             title: const Text('清理过期食材'),
             content: const Text('确认从库存中移除所有已过期食材吗？'),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
-              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('确认')),
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('取消'),
+              ),
+              FilledButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('确认'),
+              ),
             ],
           ),
         ) ??
         false;
-    if (!confirmed) return;
+    if (!confirmed) {
+      return;
+    }
 
     setState(() {
       _items = _items.where((item) => !item.isExpired).toList();
@@ -194,14 +215,18 @@ class _HomePageState extends State<HomePage> {
       _showSnack('请先在设置中填写 AI 密钥。');
       return;
     }
-    setState(() => _dailyAdvice = '正在生成今日提醒...');
+    setState(() => _dailyAdvice = force ? '正在刷新今日建议…' : '正在生成今日建议…');
     try {
       final advice = await _qwen.fetchDailyAdvice(_items, _settings);
       await SettingsRepository.saveCachedAdvice(advice);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() => _dailyAdvice = advice);
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() => _dailyAdvice = '生成失败：$error');
     }
   }
@@ -211,11 +236,15 @@ class _HomePageState extends State<HomePage> {
       context: context,
       builder: (context) => SettingsDialog(settings: _settings),
     );
-    if (updated == null) return;
+    if (updated == null) {
+      return;
+    }
     await SettingsRepository.save(updated);
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
     setState(() => _settings = updated);
-    _showSnack('设置已保存。');
+    _showSnack('AI 设置已保存。');
   }
 
   Future<String?> _askForText({
@@ -238,31 +267,31 @@ class _HomePageState extends State<HomePage> {
       _showSnack('请先在设置中填写 AI 密钥。');
       return;
     }
-    final prompt = await _askForText(
-      title: '生成菜谱',
-      hint: '可补充口味、做法或忌口要求',
-      confirmText: '开始生成',
-    );
-    if (prompt == null) return;
-    if (!mounted) return;
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
-    );
-    try {
-      final result = await _qwen.fetchRecipeSuggestions(_items, _settings, prompt);
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      await showDialog<void>(
-        context: context,
-        builder: (context) => OutputDialog(title: '菜谱建议', content: result),
-      );
-    } catch (error) {
-      if (!mounted) return;
-      Navigator.of(context).pop();
-      _showSnack('菜谱生成失败：$error');
+    if (!mounted) {
+      return;
     }
+    await Navigator.of(context).push(
+      PageRouteBuilder<void>(
+        pageBuilder: (context, animation, secondaryAnimation) => AiAssistantPage(
+          items: List<InventoryItem>.from(_items),
+          settings: _settings,
+          qwenService: _qwen,
+        ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+          return FadeTransition(
+            opacity: curved,
+            child: SlideTransition(
+              position: Tween<Offset>(
+                begin: const Offset(0, 0.04),
+                end: Offset.zero,
+              ).animate(curved),
+              child: child,
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _bulkImport() async {
@@ -272,11 +301,15 @@ class _HomePageState extends State<HomePage> {
     }
     final rawText = await _askForText(
       title: '批量导入',
-      hint: '粘贴购物清单、便签或小票文本',
+      hint: '粘贴购物清单、便签内容或自然语言描述',
       confirmText: '开始导入',
     );
-    if (rawText == null || rawText.trim().isEmpty) return;
-    if (!mounted) return;
+    if (rawText == null || rawText.trim().isEmpty) {
+      return;
+    }
+    if (!mounted) {
+      return;
+    }
     showDialog<void>(
       context: context,
       barrierDismissible: false,
@@ -284,22 +317,30 @@ class _HomePageState extends State<HomePage> {
     );
     try {
       final imported = await _qwen.bulkImport(rawText, _settings);
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       setState(() {
         _items = [...imported, ..._items];
       });
       await _saveItems();
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       Navigator.of(context).pop();
       await showDialog<void>(
         context: context,
         builder: (context) => OutputDialog(
           title: '导入结果',
-          content: imported.map((item) => '${item.name}\n${item.quantityLabel} · ${item.category}').join('\n\n'),
+          content: imported
+              .map((item) => '${item.name}\n${item.quantityLabel} · ${item.category}')
+              .join('\n\n'),
         ),
       );
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted) {
+        return;
+      }
       Navigator.of(context).pop();
       _showSnack('批量导入失败：$error');
     }
@@ -325,12 +366,8 @@ class _HomePageState extends State<HomePage> {
                 stats: _stats,
                 advice: _dailyAdvice,
                 onRefreshAdvice: _refreshAdvice,
-                onGenerateRecipes: () {
-                  _generateRecipes();
-                },
-                onBulkImport: () {
-                  _bulkImport();
-                },
+                onGenerateRecipes: _generateRecipes,
+                onBulkImport: _bulkImport,
               ),
               InventoryPage(
                 items: _filteredItems,
@@ -342,27 +379,15 @@ class _HomePageState extends State<HomePage> {
                 onSortChanged: (value) => setState(() => _sortKey = value),
                 onStatusChanged: (value) => setState(() => _statusFilter = value),
                 onCategoryChanged: (value) => setState(() => _categoryFilter = value),
-                onEdit: (item) {
-                  _showItemEditor(item);
-                },
-                onDelete: (item) {
-                  _deleteItem(item);
-                },
-                onIncrement: (item) {
-                  _adjustQuantity(item, item.defaultStep);
-                },
-                onDecrement: (item) {
-                  _adjustQuantity(item, -item.defaultStep);
-                },
+                onEdit: _showItemEditor,
+                onDelete: _deleteItem,
+                onIncrement: (item) => _adjustQuantity(item, item.defaultStep),
+                onDecrement: (item) => _adjustQuantity(item, -item.defaultStep),
               ),
               ShoppingPage(
                 shoppingItems: _stats.shoppingList,
-                onClearExpired: () {
-                  _clearExpired();
-                },
-                onExport: () {
-                  _exportData();
-                },
+                onClearExpired: _clearExpired,
+                onExport: _exportData,
               ),
             ],
           );
@@ -372,9 +397,7 @@ class _HomePageState extends State<HomePage> {
         title: const Text('鲜度管家'),
         actions: [
           IconButton(
-            onPressed: () {
-              _bootstrap();
-            },
+            onPressed: _bootstrap,
             icon: const Icon(Icons.refresh),
           ),
           IconButton(

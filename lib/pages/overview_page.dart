@@ -48,14 +48,14 @@ class OverviewPage extends StatelessWidget {
                   Expanded(
                     child: FilledButton(
                       onPressed: onGenerateRecipes,
-                      child: const Text('生成菜谱'),
+                      child: const Text('AI 问答'),
                     ),
                   ),
                   const SizedBox(width: 8),
                   IconButton.filledTonal(
                     onPressed: () => onRefreshAdvice(force: true),
                     icon: const Icon(Icons.refresh_rounded),
-                    tooltip: '刷新提醒',
+                    tooltip: '刷新建议',
                   ),
                   const SizedBox(width: 8),
                   IconButton.filledTonal(
