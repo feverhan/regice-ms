@@ -135,11 +135,11 @@ class FridgeInventoryApp extends StatelessWidget {
           height: 72,
           backgroundColor: const Color(0xFFFFFCF7),
           indicatorColor: const Color(0xFFDCE7DE),
-          labelTextStyle: MaterialStateProperty.resolveWith<TextStyle?>(
+          labelTextStyle: WidgetStateProperty.resolveWith<TextStyle?>(
             (states) => TextStyle(
-              fontSize: states.contains(MaterialState.selected) ? 12.5 : 12,
-              fontWeight: states.contains(MaterialState.selected) ? FontWeight.w700 : FontWeight.w500,
-              color: states.contains(MaterialState.selected)
+              fontSize: states.contains(WidgetState.selected) ? 12.5 : 12,
+              fontWeight: states.contains(WidgetState.selected) ? FontWeight.w700 : FontWeight.w500,
+              color: states.contains(WidgetState.selected)
                   ? const Color(0xFF284235)
                   : const Color(0xFF6A776F),
             ),
