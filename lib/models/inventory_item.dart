@@ -28,8 +28,8 @@ class InventoryItem {
           : json['id'].toString(),
       name: (json['name'] ?? '').toString().trim(),
       quantity: _parseDouble(json['quantity']),
-      unit: ((json['unit'] ?? 'item').toString().trim().isEmpty ? 'item' : json['unit'].toString().trim()),
-      category: ((json['category'] ?? 'Other').toString().trim().isEmpty ? 'Other' : json['category'].toString().trim()),
+      unit: ((json['unit'] ?? '件').toString().trim().isEmpty ? '件' : json['unit'].toString().trim()),
+      category: ((json['category'] ?? '其他').toString().trim().isEmpty ? '其他' : json['category'].toString().trim()),
       expiry: (json['expiry'] ?? '').toString().trim(),
       addedDate: DateTime.tryParse((json['addedDate'] ?? '').toString()) ?? DateTime.now(),
       minQuantity: _parseDouble(json['minQuantity']),
@@ -49,26 +49,26 @@ class InventoryItem {
   }) {
     final cleanName = name.trim();
     if (cleanName.isEmpty) {
-      throw Exception('Name is required.');
+      throw Exception('请填写食材名称。');
     }
     final quantity = _parseDouble(quantityText);
     if (quantity <= 0) {
-      throw Exception('Quantity must be greater than zero.');
+      throw Exception('数量必须大于 0。');
     }
     final minQuantity = _parseDouble(minQuantityText);
     if (minQuantity < 0) {
-      throw Exception('Threshold cannot be negative.');
+      throw Exception('低库存提醒线不能小于 0。');
     }
     final cleanExpiry = expiry.trim();
     if (cleanExpiry.isNotEmpty && DateTime.tryParse(cleanExpiry) == null) {
-      throw Exception('Expiry must use YYYY-MM-DD.');
+      throw Exception('到期日请使用 YYYY-MM-DD 格式。');
     }
     return InventoryItem(
       id: base?.id ?? DateTime.now().microsecondsSinceEpoch.toString(),
       name: cleanName,
       quantity: quantity,
-      unit: unit.trim().isEmpty ? 'item' : unit.trim(),
-      category: category.trim().isEmpty ? 'Other' : category.trim(),
+      unit: unit.trim().isEmpty ? '件' : unit.trim(),
+      category: category.trim().isEmpty ? '其他' : category.trim(),
       expiry: cleanExpiry,
       addedDate: base?.addedDate ?? DateTime.now(),
       minQuantity: minQuantity,
@@ -137,29 +137,37 @@ class InventoryItem {
 
   double get defaultStep {
     final normalized = unit.toLowerCase();
-    if (normalized == 'g' || normalized == 'gram' || normalized == 'ml') {
+    if (normalized == 'g' ||
+        normalized == 'gram' ||
+        normalized == 'ml' ||
+        normalized == '克' ||
+        normalized == '毫升') {
       return 50;
     }
-    if (normalized == 'kg' || normalized == 'l') {
+    if (normalized == 'kg' ||
+        normalized == 'l' ||
+        normalized == '公斤' ||
+        normalized == '千克' ||
+        normalized == '升') {
       return 0.5;
     }
     return 1;
   }
 
-  String get quantityLabel => '${formatNumber(quantity)} $unit';
-  String get minQuantityLabel => '${formatNumber(minQuantity)} $unit';
+  String get quantityLabel => '${formatNumber(quantity)}$unit';
+  String get minQuantityLabel => '${formatNumber(minQuantity)}$unit';
 
   String get statusDescription {
     if (isExpired) {
-      return expiry.isEmpty ? 'Expired' : 'Expired on $expiry';
+      return expiry.isEmpty ? '已过期' : '已过期 · $expiry';
     }
     if (isExpiringSoon) {
-      return 'Due soon${expiry.isEmpty ? '' : ' | $expiry'}';
+      return expiry.isEmpty ? '即将到期' : '即将到期 · $expiry';
     }
     if (isLowStock) {
-      return 'Low stock';
+      return '库存偏低';
     }
-    return expiry.isEmpty ? 'Normal' : 'Normal | Expires $expiry';
+    return expiry.isEmpty ? '状态正常' : '状态正常 · $expiry 前食用';
   }
 
   static String formatNumber(double value) {

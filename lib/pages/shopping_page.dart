@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/inventory_item.dart';
+import '../widgets/common.dart';
 
 class ShoppingPage extends StatelessWidget {
   const ShoppingPage({
@@ -16,17 +17,20 @@ class ShoppingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final padding = AppLayout.pagePadding(context);
+    final theme = Theme.of(context);
+
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
+          padding: EdgeInsets.all(padding),
           child: Row(
             children: [
               Expanded(
                 child: OutlinedButton.icon(
                   onPressed: onClearExpired,
                   icon: const Icon(Icons.delete_outline),
-                  label: const Text('Clear Expired'),
+                  label: const Text('清理过期'),
                 ),
               ),
               const SizedBox(width: 8),
@@ -34,7 +38,7 @@ class ShoppingPage extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: onExport,
                   icon: const Icon(Icons.download_outlined),
-                  label: const Text('Export'),
+                  label: const Text('导出清单'),
                 ),
               ),
             ],
@@ -42,9 +46,9 @@ class ShoppingPage extends StatelessWidget {
         ),
         Expanded(
           child: shoppingItems.isEmpty
-              ? const Center(child: Text('Nothing needs restocking right now.'))
+              ? const Center(child: Text('目前没有需要补货的食材。'))
               : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                  padding: EdgeInsets.fromLTRB(padding, 0, padding, 120),
                   itemCount: shoppingItems.length,
                   itemBuilder: (context, index) {
                     final item = shoppingItems[index];
@@ -52,18 +56,23 @@ class ShoppingPage extends StatelessWidget {
                         ? (item.minQuantity - item.quantity)
                         : item.defaultStep;
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
+                      margin: EdgeInsets.only(bottom: AppLayout.sectionGap(context)),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(AppLayout.cardPadding(context)),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(item.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                            Text(
+                              item.name,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontSize: AppLayout.itemTitleSize(context),
+                              ),
+                            ),
                             const SizedBox(height: 6),
-                            Text('Current ${item.quantityLabel}'),
-                            Text('Threshold ${item.minQuantityLabel}'),
+                            Text('当前库存 ${item.quantityLabel}'),
+                            Text('提醒阈值 ${item.minQuantityLabel}'),
                             const SizedBox(height: 6),
-                            Text('Suggested restock ${InventoryItem.formatNumber(gap)} ${item.unit}'),
+                            Text('建议补货 ${InventoryItem.formatNumber(gap)}${item.unit}'),
                           ],
                         ),
                       ),

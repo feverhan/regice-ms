@@ -37,89 +37,109 @@ class InventoryPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final padding = AppLayout.pagePadding(context);
+    final gap = AppLayout.sectionGap(context);
+    final theme = Theme.of(context);
+
     return Column(
       children: [
         Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              TextField(
-                controller: searchController,
-                decoration: const InputDecoration(
-                  prefixIcon: Icon(Icons.search),
-                  hintText: 'Search name, category, or note',
-                  border: OutlineInputBorder(),
+          padding: EdgeInsets.all(padding),
+          child: Container(
+            padding: EdgeInsets.all(AppLayout.cardPadding(context)),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFFCF7),
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: const Color(0xFFE8DFD1)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('筛选与查找', style: theme.textTheme.titleMedium),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: searchController,
+                  decoration: const InputDecoration(
+                    prefixIcon: Icon(Icons.search),
+                    hintText: '搜索食材、分类或备注',
+                    border: OutlineInputBorder(),
+                  ),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: DropdownField(
-                      value: sortKey,
-                      items: const {
-                        'recent': 'Recently added',
-                        'status': 'Status priority',
-                        'expiry': 'Expiry date',
-                        'quantity_desc': 'Quantity high to low',
-                        'quantity_asc': 'Quantity low to high',
-                        'name': 'Name',
-                        'category': 'Category',
-                      },
-                      onChanged: onSortChanged,
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    Expanded(
+                      child: DropdownField(
+                        value: sortKey,
+                        items: const {
+                          'recent': '最近添加',
+                          'status': '状态优先',
+                          'expiry': '按到期日',
+                          'quantity_desc': '数量从多到少',
+                          'quantity_asc': '数量从少到多',
+                          'name': '按名称',
+                          'category': '按分类',
+                        },
+                        onChanged: onSortChanged,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: DropdownField(
-                      value: statusFilter,
-                      items: const {
-                        '': 'All statuses',
-                        'expired': 'Expired',
-                        'warning': 'Due soon',
-                        'low': 'Low stock',
-                        'normal': 'Normal',
-                      },
-                      onChanged: onStatusChanged,
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: DropdownField(
+                        value: statusFilter,
+                        items: const {
+                          '': '全部状态',
+                          'expired': '已过期',
+                          'warning': '即将到期',
+                          'low': '库存偏低',
+                          'normal': '状态正常',
+                        },
+                        onChanged: onStatusChanged,
+                      ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              DropdownField(
-                value: categoryFilter,
-                items: {
-                  '': 'All categories',
-                  for (final category in categories) category: category,
-                },
-                onChanged: onCategoryChanged,
-              ),
-            ],
+                  ],
+                ),
+                const SizedBox(height: 8),
+                DropdownField(
+                  value: categoryFilter,
+                  items: {
+                    '': '全部分类',
+                    for (final category in categories) category: category,
+                  },
+                  onChanged: onCategoryChanged,
+                ),
+              ],
+            ),
           ),
         ),
         Expanded(
           child: items.isEmpty
-              ? const Center(child: Text('No matching items.'))
+              ? const Center(child: Text('没有匹配的食材，换个关键词试试。'))
               : ListView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 120),
+                  padding: EdgeInsets.fromLTRB(padding, 0, padding, 120),
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final item = items[index];
                     return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
+                      margin: EdgeInsets.only(bottom: gap),
                       child: Padding(
-                        padding: const EdgeInsets.all(16),
+                        padding: EdgeInsets.all(AppLayout.cardPadding(context)),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(item.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                            Text(
+                              item.name,
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontSize: AppLayout.itemTitleSize(context),
+                              ),
+                            ),
                             const SizedBox(height: 6),
-                            Text('${item.category} | ${item.quantityLabel}'),
+                            Text('${item.category} · ${item.quantityLabel}'),
                             const SizedBox(height: 6),
                             Text(item.statusDescription),
                             if (item.note.isNotEmpty) ...[
                               const SizedBox(height: 6),
-                              Text(item.note),
+                              Text(item.note, style: theme.textTheme.bodyMedium),
                             ],
                             const SizedBox(height: 12),
                             Wrap(
@@ -128,8 +148,8 @@ class InventoryPage extends StatelessWidget {
                               children: [
                                 OutlinedButton(onPressed: () => onDecrement(item), child: const Text('-1')),
                                 OutlinedButton(onPressed: () => onIncrement(item), child: const Text('+1')),
-                                TextButton(onPressed: () => onEdit(item), child: const Text('Edit')),
-                                TextButton(onPressed: () => onDelete(item), child: const Text('Delete')),
+                                TextButton(onPressed: () => onEdit(item), child: const Text('编辑')),
+                                TextButton(onPressed: () => onDelete(item), child: const Text('删除')),
                               ],
                             ),
                           ],

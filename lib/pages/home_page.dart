@@ -25,7 +25,7 @@ class _HomePageState extends State<HomePage> {
 
   List<InventoryItem> _items = <InventoryItem>[];
   SettingsData _settings = SettingsData.defaults();
-  String _dailyAdvice = 'Add your AI key in settings first.';
+  String _dailyAdvice = '先在设置中填写 AI 密钥，再生成每日饮食建议。';
   bool _loading = true;
   int _tabIndex = 0;
   String _sortKey = 'recent';
@@ -139,13 +139,13 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _deleteItem(InventoryItem item) async {
     final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete item'),
-            content: Text('Delete "${item.name}"?'),
+      context: context,
+      builder: (context) => AlertDialog(
+            title: const Text('删除食材'),
+            content: Text('确认删除“${item.name}”吗？'),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Delete')),
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('删除')),
             ],
           ),
         ) ??
@@ -170,13 +170,13 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _clearExpired() async {
     final confirmed = await showDialog<bool>(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Clear expired'),
-            content: const Text('Remove all expired items from inventory?'),
+      context: context,
+      builder: (context) => AlertDialog(
+            title: const Text('清理过期食材'),
+            content: const Text('确认从库存中移除所有已过期食材吗？'),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('Confirm')),
+              TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('取消')),
+              FilledButton(onPressed: () => Navigator.pop(context, true), child: const Text('确认')),
             ],
           ),
         ) ??
@@ -191,10 +191,10 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _refreshAdvice({bool force = false}) async {
     if (_settings.apiKey.trim().isEmpty) {
-      _showSnack('Add your AI key in settings first.');
+      _showSnack('请先在设置中填写 AI 密钥。');
       return;
     }
-    setState(() => _dailyAdvice = 'Loading...');
+    setState(() => _dailyAdvice = '正在生成今日提醒...');
     try {
       final advice = await _qwen.fetchDailyAdvice(_items, _settings);
       await SettingsRepository.saveCachedAdvice(advice);
@@ -202,7 +202,7 @@ class _HomePageState extends State<HomePage> {
       setState(() => _dailyAdvice = advice);
     } catch (error) {
       if (!mounted) return;
-      setState(() => _dailyAdvice = 'Advice failed: $error');
+      setState(() => _dailyAdvice = '生成失败：$error');
     }
   }
 
@@ -215,7 +215,7 @@ class _HomePageState extends State<HomePage> {
     await SettingsRepository.save(updated);
     if (!mounted) return;
     setState(() => _settings = updated);
-    _showSnack('Settings saved.');
+    _showSnack('设置已保存。');
   }
 
   Future<String?> _askForText({
@@ -235,13 +235,13 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _generateRecipes() async {
     if (_settings.apiKey.trim().isEmpty) {
-      _showSnack('Add your AI key in settings first.');
+      _showSnack('请先在设置中填写 AI 密钥。');
       return;
     }
     final prompt = await _askForText(
-      title: 'Recipe request',
-      hint: 'Optional extra request',
-      confirmText: 'Generate',
+      title: '生成菜谱',
+      hint: '可补充口味、做法或忌口要求',
+      confirmText: '开始生成',
     );
     if (prompt == null) return;
     if (!mounted) return;
@@ -256,24 +256,24 @@ class _HomePageState extends State<HomePage> {
       Navigator.of(context).pop();
       await showDialog<void>(
         context: context,
-        builder: (context) => OutputDialog(title: 'Recipe Suggestions', content: result),
+        builder: (context) => OutputDialog(title: '菜谱建议', content: result),
       );
     } catch (error) {
       if (!mounted) return;
       Navigator.of(context).pop();
-      _showSnack('Recipe generation failed: $error');
+      _showSnack('菜谱生成失败：$error');
     }
   }
 
   Future<void> _bulkImport() async {
     if (_settings.apiKey.trim().isEmpty) {
-      _showSnack('Add your AI key in settings first.');
+      _showSnack('请先在设置中填写 AI 密钥。');
       return;
     }
     final rawText = await _askForText(
-      title: 'Bulk Import',
-      hint: 'Paste a shopping list, notes, or receipt text',
-      confirmText: 'Import',
+      title: '批量导入',
+      hint: '粘贴购物清单、便签或小票文本',
+      confirmText: '开始导入',
     );
     if (rawText == null || rawText.trim().isEmpty) return;
     if (!mounted) return;
@@ -294,20 +294,20 @@ class _HomePageState extends State<HomePage> {
       await showDialog<void>(
         context: context,
         builder: (context) => OutputDialog(
-          title: 'Import Result',
-          content: imported.map((item) => '${item.name}\n${item.quantityLabel} | ${item.category}').join('\n\n'),
+          title: '导入结果',
+          content: imported.map((item) => '${item.name}\n${item.quantityLabel} · ${item.category}').join('\n\n'),
         ),
       );
     } catch (error) {
       if (!mounted) return;
       Navigator.of(context).pop();
-      _showSnack('Bulk import failed: $error');
+      _showSnack('批量导入失败：$error');
     }
   }
 
   Future<void> _exportData() async {
     final file = await _store.exportItems(_items);
-    _showSnack('Exported to ${file.path}');
+    _showSnack('已导出到 ${file.path}');
   }
 
   void _showSnack(String message) {
@@ -369,7 +369,7 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Fridge Inventory'),
+        title: const Text('鲜度管家'),
         actions: [
           IconButton(
             onPressed: () {
@@ -388,16 +388,16 @@ class _HomePageState extends State<HomePage> {
           ? FloatingActionButton.extended(
               onPressed: () => _showItemEditor(),
               icon: const Icon(Icons.add),
-              label: const Text('Add Item'),
+              label: const Text('新增食材'),
             )
           : null,
       bottomNavigationBar: NavigationBar(
         selectedIndex: _tabIndex,
         onDestinationSelected: (value) => setState(() => _tabIndex = value),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_outlined), label: 'Overview'),
-          NavigationDestination(icon: Icon(Icons.inventory_2_outlined), label: 'Inventory'),
-          NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), label: 'Shopping'),
+          NavigationDestination(icon: Icon(Icons.dashboard_outlined), label: '总览'),
+          NavigationDestination(icon: Icon(Icons.inventory_2_outlined), label: '库存'),
+          NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), label: '补货'),
         ],
       ),
     );

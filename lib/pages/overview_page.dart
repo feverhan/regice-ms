@@ -21,75 +21,98 @@ class OverviewPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final padding = AppLayout.pagePadding(context);
+    final gap = AppLayout.sectionGap(context);
+
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(padding),
       children: [
-        Wrap(
-          spacing: 12,
-          runSpacing: 12,
-          children: [
-            StatCard(label: 'Items', value: '${stats.itemCount}', color: const Color(0xFF166534)),
-            StatCard(label: 'Due Soon', value: '${stats.expiringSoon}', color: const Color(0xFFB45309)),
-            StatCard(label: 'Expired', value: '${stats.expired}', color: const Color(0xFFB91C1C)),
-            StatCard(label: 'Low Stock', value: '${stats.lowStock}', color: const Color(0xFF0F766E)),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text('Today\'s Advice', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+        Container(
+          padding: EdgeInsets.all(AppLayout.cardPadding(context) + 2),
+          decoration: BoxDecoration(
+            color: const Color(0xFFEAE2D1),
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('今日厨房提醒', style: Theme.of(context).textTheme.bodySmall),
+              const SizedBox(height: 8),
+              Text(
+                advice,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(height: 1.45),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: FilledButton(
+                      onPressed: onGenerateRecipes,
+                      child: const Text('生成菜谱'),
                     ),
-                    TextButton(
-                      onPressed: () => onRefreshAdvice(force: true),
-                      child: const Text('Refresh'),
-                    ),
-                  ],
-                ),
-                Text(advice),
-              ],
-            ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    onPressed: () => onRefreshAdvice(force: true),
+                    icon: const Icon(Icons.refresh_rounded),
+                    tooltip: '刷新提醒',
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton.filledTonal(
+                    onPressed: onBulkImport,
+                    icon: const Icon(Icons.auto_awesome_rounded),
+                    tooltip: '批量导入',
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: gap),
+        Text('库存概览', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: 10),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final columnGap = gap;
+            final width = (constraints.maxWidth - columnGap) / 2;
+            return Wrap(
+              spacing: columnGap,
+              runSpacing: columnGap,
+              children: [
+                StatCard(label: '食材总数', value: '${stats.itemCount}', color: const Color(0xFF315947), width: width),
+                StatCard(label: '临期提醒', value: '${stats.expiringSoon}', color: const Color(0xFFB26A1D), width: width),
+                StatCard(label: '已过期', value: '${stats.expired}', color: const Color(0xFFB14242), width: width),
+                StatCard(label: '待补货', value: '${stats.lowStock}', color: const Color(0xFF176B67), width: width),
+              ],
+            );
+          },
+        ),
+        SizedBox(height: gap),
         Card(
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(AppLayout.cardPadding(context)),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Category Summary', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700)),
+                Text('分类汇总', style: Theme.of(context).textTheme.titleMedium),
                 const SizedBox(height: 8),
                 if (stats.categoryTotals.isEmpty)
-                  const Text('No inventory items yet.')
+                  const Text('还没有录入食材，先从常用食材开始吧。')
                 else
                   ...stats.categoryTotals.entries.map(
                     (entry) => Padding(
                       padding: const EdgeInsets.only(bottom: 6),
-                      child: Text('${entry.key}: ${entry.value.toStringAsFixed(entry.value % 1 == 0 ? 0 : 1)}'),
+                      child: Row(
+                        children: [
+                          Expanded(child: Text(entry.key)),
+                          Text(entry.value.toStringAsFixed(entry.value % 1 == 0 ? 0 : 1)),
+                        ],
+                      ),
                     ),
                   ),
               ],
             ),
           ),
-        ),
-        const SizedBox(height: 16),
-        FilledButton.icon(
-          onPressed: onGenerateRecipes,
-          icon: const Icon(Icons.restaurant_menu),
-          label: const Text('Generate Recipes'),
-        ),
-        const SizedBox(height: 8),
-        OutlinedButton.icon(
-          onPressed: onBulkImport,
-          icon: const Icon(Icons.auto_awesome),
-          label: const Text('Bulk Import'),
         ),
       ],
     );

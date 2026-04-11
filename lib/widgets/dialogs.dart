@@ -27,8 +27,8 @@ class _ItemEditorDialogState extends State<ItemEditorDialog> {
     final item = widget.item;
     _nameController = TextEditingController(text: item?.name ?? '');
     _quantityController = TextEditingController(text: item == null ? '1' : InventoryItem.formatNumber(item.quantity));
-    _unitController = TextEditingController(text: item?.unit ?? 'item');
-    _categoryController = TextEditingController(text: item?.category ?? 'Other');
+    _unitController = TextEditingController(text: item?.unit ?? '件');
+    _categoryController = TextEditingController(text: item?.category ?? '其他');
     _expiryController = TextEditingController(text: item?.expiry ?? '');
     _minQuantityController = TextEditingController(text: item == null ? '0' : InventoryItem.formatNumber(item.minQuantity));
     _noteController = TextEditingController(text: item?.note ?? '');
@@ -49,29 +49,33 @@ class _ItemEditorDialogState extends State<ItemEditorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.item == null ? 'Add Item' : 'Edit Item'),
+      title: Text(widget.item == null ? '新增食材' : '编辑食材'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _input(_nameController, 'Name'),
+            _input(_nameController, '食材名称'),
             const SizedBox(height: 8),
-            _input(_quantityController, 'Quantity', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
+            _input(_quantityController, '数量', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
             const SizedBox(height: 8),
-            _input(_unitController, 'Unit'),
+            _input(_unitController, '单位'),
             const SizedBox(height: 8),
-            _input(_categoryController, 'Category'),
+            _input(_categoryController, '分类'),
             const SizedBox(height: 8),
-            _input(_expiryController, 'Expiry date YYYY-MM-DD'),
+            _input(_expiryController, '到期日 YYYY-MM-DD'),
             const SizedBox(height: 8),
-            _input(_minQuantityController, 'Low stock threshold', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
+            _input(
+              _minQuantityController,
+              '低库存提醒线',
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
             const SizedBox(height: 8),
-            _input(_noteController, 'Note', maxLines: 3),
+            _input(_noteController, '备注', maxLines: 3),
           ],
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
         FilledButton(
           onPressed: () {
             try {
@@ -90,7 +94,7 @@ class _ItemEditorDialogState extends State<ItemEditorDialog> {
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
             }
           },
-          child: const Text('Save'),
+          child: const Text('保存'),
         ),
       ],
     );
@@ -144,18 +148,18 @@ class _SettingsDialogState extends State<SettingsDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('AI Settings'),
+      title: const Text('AI 设置'),
       content: SingleChildScrollView(
         child: Column(
           children: [
             TextField(
               controller: _apiKeyController,
-              decoration: const InputDecoration(labelText: 'API Key', border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: 'API 密钥', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _modelController,
-              decoration: const InputDecoration(labelText: 'Model', border: OutlineInputBorder()),
+              decoration: const InputDecoration(labelText: '模型名称', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -163,8 +167,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
               minLines: 3,
               maxLines: 5,
               decoration: const InputDecoration(
-                labelText: 'Base URLs',
-                hintText: 'One endpoint per line',
+                labelText: '接口地址',
+                hintText: '每行填写一个接口地址',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -172,7 +176,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
         FilledButton(
           onPressed: () {
             Navigator.pop(
@@ -188,7 +192,7 @@ class _SettingsDialogState extends State<SettingsDialog> {
               ),
             );
           },
-          child: const Text('Save'),
+          child: const Text('保存'),
         ),
       ],
     );
@@ -231,7 +235,7 @@ class _TextInputDialogState extends State<TextInputDialog> {
         decoration: InputDecoration(hintText: widget.hint, border: const OutlineInputBorder()),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+        TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
         FilledButton(
           onPressed: () => Navigator.pop(context, _controller.text.trim()),
           child: Text(widget.confirmText),
@@ -253,7 +257,7 @@ class OutputDialog extends StatelessWidget {
       title: Text(title),
       content: SingleChildScrollView(child: SelectableText(content)),
       actions: [
-        FilledButton(onPressed: () => Navigator.pop(context), child: const Text('Close')),
+        FilledButton(onPressed: () => Navigator.pop(context), child: const Text('关闭')),
       ],
     );
   }

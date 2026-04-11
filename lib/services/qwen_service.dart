@@ -15,12 +15,11 @@ class QwenService {
       messages: <Map<String, String>>[
         {
           'role': 'system',
-          'content':
-              'You are a home food advisor. Reply in Simplified Chinese only. Give exactly one short suggestion under 70 Chinese characters.',
+          'content': '你是一位家庭饮食顾问，只能用简体中文回复，并给出一条不超过 70 个汉字的简短建议。',
         },
         {
           'role': 'user',
-          'content': 'Inventory:\n${jsonEncode(_snapshot(items))}',
+          'content': '当前库存：\n${jsonEncode(_snapshot(items))}',
         },
       ],
     );
@@ -37,13 +36,11 @@ class QwenService {
       messages: <Map<String, String>>[
         {
           'role': 'system',
-          'content':
-              'You are a home cooking assistant. Reply in Simplified Chinese only. Recommend practical recipes using the inventory. Prioritize items expiring soon and never suggest expired food.',
+          'content': '你是一位家庭烹饪助手，只能用简体中文回复。请基于库存推荐实用菜谱，优先使用临期食材，绝不要建议使用过期食材。',
         },
         {
           'role': 'user',
-          'content':
-              'User request: ${prompt.isEmpty ? 'Recommend recipes based on the inventory.' : prompt}\n\nInventory:\n${jsonEncode(_snapshot(items))}',
+          'content': '用户要求：${prompt.isEmpty ? '请根据库存推荐菜谱。' : prompt}\n\n当前库存：\n${jsonEncode(_snapshot(items))}',
         },
       ],
     );
@@ -56,12 +53,11 @@ class QwenService {
       messages: <Map<String, String>>[
         {
           'role': 'system',
-          'content':
-              'Return JSON only. Each item must include name, quantity, unit, category, expiry, minQuantity, note.',
+          'content': '只返回 JSON。每个条目必须包含 name、quantity、unit、category、expiry、minQuantity、note。',
         },
         {
           'role': 'user',
-          'content': 'Parse this text into inventory JSON:\n$rawText',
+          'content': '请把这段文本解析成库存 JSON：\n$rawText',
         },
       ],
     );
@@ -82,10 +78,10 @@ class QwenService {
     required List<Map<String, String>> messages,
   }) async {
     if (settings.apiKey.trim().isEmpty) {
-      throw Exception('Missing API key.');
+      throw Exception('缺少 API 密钥。');
     }
 
-    String lastError = 'Request failed.';
+    String lastError = '请求失败。';
     for (final url in settings.baseUrls) {
       try {
         final response = await http.post(
@@ -109,7 +105,7 @@ class QwenService {
         final decoded = jsonDecode(response.body) as Map<String, dynamic>;
         final choices = decoded['choices'] as List<dynamic>? ?? <dynamic>[];
         if (choices.isEmpty) {
-          throw Exception('Model returned no content.');
+          throw Exception('模型未返回内容。');
         }
         final message = choices.first['message'] as Map<String, dynamic>? ?? <String, dynamic>{};
         final content = message['content'];
@@ -122,7 +118,7 @@ class QwenService {
               .join()
               .trim();
         }
-        throw Exception('Invalid model payload.');
+        throw Exception('模型返回格式无效。');
       } catch (error) {
         lastError = '$error';
       }
@@ -138,7 +134,7 @@ class QwenService {
             'quantity': item.quantity,
             'unit': item.unit,
             'category': item.category,
-            'expiry': item.expiry.isEmpty ? 'not set' : item.expiry,
+            'expiry': item.expiry.isEmpty ? '未设置' : item.expiry,
             'minQuantity': item.minQuantity,
             'note': item.note,
             'status': item.statusDescription,
@@ -169,7 +165,7 @@ class QwenService {
         }
       }
     }
-    throw Exception('AI response did not contain valid JSON.');
+    throw Exception('AI 返回内容里没有找到有效 JSON。');
   }
 
   bool _tryParse(String value) {
