@@ -51,7 +51,7 @@ class DropdownField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
-      value: value,
+      initialValue: value,
       decoration: const InputDecoration(border: OutlineInputBorder()),
       items: items.entries
           .map((entry) => DropdownMenuItem<String>(
