@@ -1,4 +1,4 @@
-name: Build Flutter APK
+name: Android APK
 
 on:
   workflow_dispatch:
@@ -16,21 +16,24 @@ on:
 jobs:
   build-apk:
     runs-on: ubuntu-latest
+    env:
+      JAVA_VERSION: "17"
+      FLUTTER_VERSION: "3.41.6"
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Java 17
+      - name: Set up Java
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: ${{ env.JAVA_VERSION }}
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
-          channel: stable
+          flutter-version: ${{ env.FLUTTER_VERSION }}
           cache: true
 
       - name: Flutter pub get
@@ -39,12 +42,23 @@ jobs:
       - name: Analyze Dart code
         run: flutter analyze
 
-      - name: Build debug APK
-        run: flutter build apk --debug
+      - name: Decode Android keystore
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        shell: bash
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore-ci.jks
+
+      - name: Build release APK
+        env:
+          ANDROID_KEYSTORE_PATH: app/upload-keystore-ci.jks
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: fridge-inventory-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: regice-ms-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
           if-no-files-found: error

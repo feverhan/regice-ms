@@ -10,6 +10,13 @@ if (keystorePropertiesFile.exists()) {
     keystorePropertiesFile.withInputStream { keystoreProperties.load(it) }
 }
 
+def ciStoreFile = System.getenv("ANDROID_KEYSTORE_PATH")
+def ciStorePassword = System.getenv("ANDROID_STORE_PASSWORD")
+def ciKeyAlias = System.getenv("ANDROID_KEY_ALIAS")
+def ciKeyPassword = System.getenv("ANDROID_KEY_PASSWORD")
+def hasCiSigning = ciStoreFile && ciStorePassword && ciKeyAlias && ciKeyPassword
+def hasLocalSigning = keystorePropertiesFile.exists()
+
 android {
     namespace "com.regicems.app"
     compileSdk flutter.compileSdkVersion
@@ -34,7 +41,12 @@ android {
 
     signingConfigs {
         release {
-            if (keystorePropertiesFile.exists()) {
+            if (hasCiSigning) {
+                keyAlias ciKeyAlias
+                keyPassword ciKeyPassword
+                storeFile rootProject.file(ciStoreFile)
+                storePassword ciStorePassword
+            } else if (hasLocalSigning) {
                 keyAlias keystoreProperties["keyAlias"]
                 keyPassword keystoreProperties["keyPassword"]
                 storeFile rootProject.file(keystoreProperties["storeFile"])
@@ -45,7 +57,11 @@ android {
 
     buildTypes {
         release {
-            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            if (hasCiSigning || hasLocalSigning) {
+                signingConfig signingConfigs.release
+            } else {
+                signingConfig signingConfigs.debug
+            }
         }
     }
 }
