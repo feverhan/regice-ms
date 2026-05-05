@@ -1,12 +1,47 @@
-.env
+# Flutter
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
 .packages
 .pub/
 build/
-.vscode/
+pubspec.lock
+
+# Android
 android/.gradle/
 android/local.properties
 android/key.properties
 android/app/upload-keystore.jks
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Environment
+.env
+.env.local
+
+# Local data files
+data/
+*.json
+fridge-inventory.html
+
+# Logs
+*.log
+
+# Legacy Flask/Web files (no longer used)
+app.py
+templates/
+static/
+requirements.txt
+Dockerfile
+docker-compose.yml
+.dockerignore
+deploy-*.ps1
+build-image*.ps1
+
+# OS
+.DS_Store
+Thumbs.db
