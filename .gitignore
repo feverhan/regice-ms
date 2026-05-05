@@ -5,6 +5,8 @@
 .packages
 .pub/
 build/
+.vscode/
+android/.gradle/
 android/local.properties
 android/key.properties
 android/app/upload-keystore.jks
