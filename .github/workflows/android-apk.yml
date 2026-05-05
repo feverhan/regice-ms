@@ -43,10 +43,12 @@ jobs:
         run: flutter analyze
 
       - name: Decode Android keystore
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+        if: ${{ env.ANDROID_KEYSTORE_BASE64 != '' }}
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
         shell: bash
         run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/upload-keystore-ci.jks
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore-ci.jks
 
       - name: Build release APK
         env:
