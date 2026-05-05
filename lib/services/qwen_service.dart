@@ -9,7 +9,8 @@ import '../models/settings_data.dart';
 class QwenService {
   const QwenService();
 
-  Future<String> fetchDailyAdvice(List<InventoryItem> items, SettingsData settings) {
+  Future<String> fetchDailyAdvice(
+      List<InventoryItem> items, SettingsData settings) {
     return _requestText(
       settings: settings,
       temperature: 0.5,
@@ -52,18 +53,43 @@ class QwenService {
     );
   }
 
-  Future<List<InventoryItem>> bulkImport(String rawText, SettingsData settings) async {
+  Future<List<InventoryItem>> bulkImport(
+    String rawText,
+    SettingsData settings, {
+    List<InventoryItem> currentItems = const <InventoryItem>[],
+  }) async {
+    final today = DateTime.now().toIso8601String().split('T').first;
     final response = await _requestText(
       settings: settings,
       temperature: 0.2,
       messages: <Map<String, String>>[
         <String, String>{
           'role': 'system',
-          'content': '只返回 JSON。每个条目必须包含 name、quantity、unit、category、expiry、minQuantity、note。',
+          'content': '''
+你是一名家庭冰箱库存录入助手。
+你的唯一任务是把用户输入的自然语言、购物清单、票据信息或库存变更描述解析成可直接入库的 JSON 数组。
+只输出 JSON，不要输出 Markdown，不要解释，不要补充说明。
+每个数组元素都必须是对象，并且严格包含这些字段：name, quantity, unit, category, expiry, minQuantity, note。
+quantity 和 minQuantity 必须是数字。
+unit 必须是简短中文单位，例如 个、把、袋、盒、瓶、包、克、千克、毫升、升。
+category 只能是 蔬菜、水果、肉类、海鲜、乳制品、饮料、调料、主食、速食、其他 之一。
+expiry 必须是 YYYY-MM-DD 格式；如果用户没有提供有效日期，就填空字符串。
+minQuantity 默认为 0，除非用户明确提到提醒值。
+note 用于保留原文中的备注、品牌、位置、用途等信息，没有就填空字符串。
+如果一句话里提到多个食材，必须拆成多条记录。
+如果信息不足，做最保守的合理推断，但不要编造不存在的品牌、日期或规格。
+今天日期是 $today，如果用户说今天、明天、后天，请换算成具体日期。
+''',
         },
         <String, String>{
           'role': 'user',
-          'content': '请把这段文本解析成库存 JSON：\n$rawText',
+          'content': '''
+当前库存如下，供你理解已有名称、单位和分类：
+${jsonEncode(_snapshot(currentItems))}
+
+请解析下面这段库存录入文本，并直接返回 JSON 数组：
+${rawText.trim()}
+''',
         },
       ],
     );
@@ -73,9 +99,15 @@ class QwenService {
     final list = decoded is Map<String, dynamic>
         ? decoded['items'] as List<dynamic>? ?? <dynamic>[]
         : decoded as List<dynamic>;
-    return list
-        .map((entry) => InventoryItem.fromJson(entry as Map<String, dynamic>).withGeneratedIdentity())
+    final items = list
+        .whereType<Map<String, dynamic>>()
+        .map((entry) => InventoryItem.fromJson(entry).withGeneratedIdentity())
+        .where((item) => item.name.trim().isNotEmpty && item.quantity > 0)
         .toList();
+    if (items.isEmpty) {
+      throw Exception('没有从这段文本里识别出可导入的食材。');
+    }
+    return items;
   }
 
   Future<String> _requestText({
@@ -113,14 +145,16 @@ class QwenService {
         if (choices.isEmpty) {
           throw Exception('这次没有拿到可用回复。');
         }
-        final message = choices.first['message'] as Map<String, dynamic>? ?? <String, dynamic>{};
+        final message = choices.first['message'] as Map<String, dynamic>? ??
+            <String, dynamic>{};
         final content = message['content'];
         if (content is String) {
           return content.trim();
         }
         if (content is List) {
           return content
-              .map((entry) => (entry as Map<String, dynamic>)['text']?.toString() ?? '')
+              .map((entry) =>
+                  (entry as Map<String, dynamic>)['text']?.toString() ?? '')
               .join()
               .trim();
         }
@@ -173,13 +207,16 @@ class QwenService {
 
             final response = await client.send(request);
             if (response.statusCode >= 400) {
-              lastError = '${response.statusCode}: ${await response.stream.bytesToString()}';
+              lastError =
+                  '${response.statusCode}: ${await response.stream.bytesToString()}';
               client.close();
               activeClient = null;
               continue;
             }
 
-            await for (final line in response.stream.transform(utf8.decoder).transform(const LineSplitter())) {
+            await for (final line in response.stream
+                .transform(utf8.decoder)
+                .transform(const LineSplitter())) {
               if (canceled) {
                 return;
               }
@@ -197,10 +234,12 @@ class QwenService {
               }
 
               final payload = jsonDecode(raw) as Map<String, dynamic>;
-              final choices = payload['choices'] as List<dynamic>? ?? const <dynamic>[];
+              final choices =
+                  payload['choices'] as List<dynamic>? ?? const <dynamic>[];
               final delta = choices.isEmpty
                   ? const <String, dynamic>{}
-                  : (choices.first['delta'] as Map<String, dynamic>? ?? const <String, dynamic>{});
+                  : (choices.first['delta'] as Map<String, dynamic>? ??
+                      const <String, dynamic>{});
               final content = delta['content'];
 
               if (content is String && content.isNotEmpty) {
@@ -210,7 +249,9 @@ class QwenService {
 
               if (content is List) {
                 final chunk = content
-                    .map((entry) => (entry as Map<String, dynamic>)['text']?.toString() ?? '')
+                    .map((entry) =>
+                        (entry as Map<String, dynamic>)['text']?.toString() ??
+                        '')
                     .join();
                 if (chunk.isNotEmpty) {
                   controller.add(chunk);
@@ -259,7 +300,8 @@ class QwenService {
     String prompt, {
     List<Map<String, String>> history = const <Map<String, String>>[],
   }) {
-    final normalizedPrompt = prompt.trim().isEmpty ? '请根据库存推荐一顿实用的家常餐。' : prompt.trim();
+    final normalizedPrompt =
+        prompt.trim().isEmpty ? '请根据库存推荐一顿实用的家常餐。' : prompt.trim();
     return <Map<String, String>>[
       <String, String>{
         'role': 'system',

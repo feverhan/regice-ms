@@ -3,16 +3,16 @@ import 'package:flutter/material.dart';
 import '../models/inventory_item.dart';
 import '../models/settings_data.dart';
 
-class ItemEditorDialog extends StatefulWidget {
-  const ItemEditorDialog({super.key, this.item});
+class ItemEditorSheet extends StatefulWidget {
+  const ItemEditorSheet({super.key, this.item});
 
   final InventoryItem? item;
 
   @override
-  State<ItemEditorDialog> createState() => _ItemEditorDialogState();
+  State<ItemEditorSheet> createState() => _ItemEditorSheetState();
 }
 
-class _ItemEditorDialogState extends State<ItemEditorDialog> {
+class _ItemEditorSheetState extends State<ItemEditorSheet> {
   late final TextEditingController _nameController;
   late final TextEditingController _quantityController;
   late final TextEditingController _unitController;
@@ -26,11 +26,14 @@ class _ItemEditorDialogState extends State<ItemEditorDialog> {
     super.initState();
     final item = widget.item;
     _nameController = TextEditingController(text: item?.name ?? '');
-    _quantityController = TextEditingController(text: item == null ? '1' : InventoryItem.formatNumber(item.quantity));
+    _quantityController = TextEditingController(
+        text: item == null ? '1' : InventoryItem.formatNumber(item.quantity));
     _unitController = TextEditingController(text: item?.unit ?? '件');
     _categoryController = TextEditingController(text: item?.category ?? '其他');
     _expiryController = TextEditingController(text: item?.expiry ?? '');
-    _minQuantityController = TextEditingController(text: item == null ? '0' : InventoryItem.formatNumber(item.minQuantity));
+    _minQuantityController = TextEditingController(
+        text:
+            item == null ? '0' : InventoryItem.formatNumber(item.minQuantity));
     _noteController = TextEditingController(text: item?.note ?? '');
   }
 
@@ -48,56 +51,140 @@ class _ItemEditorDialogState extends State<ItemEditorDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.item == null ? '添加食材' : '编辑食材'),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            _input(_nameController, '食材名称'),
-            const SizedBox(height: 8),
-            _input(_quantityController, '当前数量', keyboardType: const TextInputType.numberWithOptions(decimal: true)),
-            const SizedBox(height: 8),
-            _input(_unitController, '单位'),
-            const SizedBox(height: 8),
-            _input(_categoryController, '分类'),
-            const SizedBox(height: 8),
-            _input(_expiryController, '到期日（YYYY-MM-DD）'),
-            const SizedBox(height: 8),
-            _input(
-              _minQuantityController,
-              '低库存提醒',
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+    final theme = Theme.of(context);
+    final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
+
+    return AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: DraggableScrollableSheet(
+        initialChildSize: 0.82,
+        minChildSize: 0.45,
+        maxChildSize: 0.96,
+        expand: false,
+        builder: (context, scrollController) {
+          return DecoratedBox(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
             ),
-            const SizedBox(height: 8),
-            _input(_noteController, '备注（选填）', maxLines: 3),
-          ],
-        ),
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                Container(
+                  width: 38,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD7D0C5),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 18, 12, 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          widget.item == null ? '添加食材' : '编辑食材',
+                          style: theme.textTheme.titleLarge,
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded),
+                        tooltip: '关闭',
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: ListView(
+                    controller: scrollController,
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                    children: [
+                      _input(_nameController, '食材名称'),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Expanded(
+                            flex: 3,
+                            child: _input(
+                              _quantityController,
+                              '当前数量',
+                              keyboardType:
+                                  const TextInputType.numberWithOptions(
+                                decimal: true,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(child: _input(_unitController, '单位')),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      _input(_categoryController, '分类'),
+                      const SizedBox(height: 10),
+                      _input(_expiryController, '到期日（YYYY-MM-DD）'),
+                      const SizedBox(height: 10),
+                      _input(
+                        _minQuantityController,
+                        '低库存提醒',
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      _input(_noteController, '备注（选填）', maxLines: 3),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('取消'),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        flex: 2,
+                        child: FilledButton(
+                          onPressed: _submit,
+                          child: const Text('保存'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
-        FilledButton(
-          onPressed: () {
-            try {
-              final item = InventoryItem.fromForm(
-                base: widget.item,
-                name: _nameController.text,
-                quantityText: _quantityController.text,
-                unit: _unitController.text,
-                category: _categoryController.text,
-                expiry: _expiryController.text,
-                minQuantityText: _minQuantityController.text,
-                note: _noteController.text,
-              );
-              Navigator.pop(context, item);
-            } catch (error) {
-              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$error')));
-            }
-          },
-          child: const Text('保存'),
-        ),
-      ],
     );
+  }
+
+  void _submit() {
+    try {
+      final item = InventoryItem.fromForm(
+        base: widget.item,
+        name: _nameController.text,
+        quantityText: _quantityController.text,
+        unit: _unitController.text,
+        category: _categoryController.text,
+        expiry: _expiryController.text,
+        minQuantityText: _minQuantityController.text,
+        note: _noteController.text,
+      );
+      Navigator.pop(context, item);
+    } catch (error) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('$error')));
+    }
   }
 
   Widget _input(
@@ -110,7 +197,8 @@ class _ItemEditorDialogState extends State<ItemEditorDialog> {
       controller: controller,
       keyboardType: keyboardType,
       maxLines: maxLines,
-      decoration: InputDecoration(labelText: label, border: const OutlineInputBorder()),
+      decoration:
+          InputDecoration(labelText: label, border: const OutlineInputBorder()),
     );
   }
 }
@@ -134,7 +222,8 @@ class _SettingsDialogState extends State<SettingsDialog> {
     super.initState();
     _apiKeyController = TextEditingController(text: widget.settings.apiKey);
     _modelController = TextEditingController(text: widget.settings.model);
-    _baseUrlsController = TextEditingController(text: widget.settings.baseUrls.join('\n'));
+    _baseUrlsController =
+        TextEditingController(text: widget.settings.baseUrls.join('\n'));
   }
 
   @override
@@ -154,12 +243,14 @@ class _SettingsDialogState extends State<SettingsDialog> {
           children: [
             TextField(
               controller: _apiKeyController,
-              decoration: const InputDecoration(labelText: 'API Key', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: 'API Key', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 8),
             TextField(
               controller: _modelController,
-              decoration: const InputDecoration(labelText: '模型', border: OutlineInputBorder()),
+              decoration: const InputDecoration(
+                  labelText: '模型', border: OutlineInputBorder()),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -176,14 +267,17 @@ class _SettingsDialogState extends State<SettingsDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
+        TextButton(
+            onPressed: () => Navigator.pop(context), child: const Text('取消')),
         FilledButton(
           onPressed: () {
             Navigator.pop(
               context,
               SettingsData(
                 apiKey: _apiKeyController.text.trim(),
-                model: _modelController.text.trim().isEmpty ? 'qwen3.5-plus' : _modelController.text.trim(),
+                model: _modelController.text.trim().isEmpty
+                    ? 'qwen3.5-plus'
+                    : _modelController.text.trim(),
                 baseUrls: _baseUrlsController.text
                     .split('\n')
                     .map((entry) => entry.trim())
@@ -230,12 +324,14 @@ class _TextInputDialogState extends State<TextInputDialog> {
       title: Text(widget.title),
       content: TextField(
         controller: _controller,
-        minLines: 4,
-        maxLines: 8,
-        decoration: InputDecoration(hintText: widget.hint, border: const OutlineInputBorder()),
+        minLines: 8,
+        maxLines: 14,
+        decoration: InputDecoration(
+            hintText: widget.hint, border: const OutlineInputBorder()),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
+        TextButton(
+            onPressed: () => Navigator.pop(context), child: const Text('取消')),
         FilledButton(
           onPressed: () => Navigator.pop(context, _controller.text.trim()),
           child: Text(widget.confirmText),
@@ -257,7 +353,8 @@ class OutputDialog extends StatelessWidget {
       title: Text(title),
       content: SingleChildScrollView(child: SelectableText(content)),
       actions: [
-        FilledButton(onPressed: () => Navigator.pop(context), child: const Text('知道了')),
+        FilledButton(
+            onPressed: () => Navigator.pop(context), child: const Text('知道了')),
       ],
     );
   }

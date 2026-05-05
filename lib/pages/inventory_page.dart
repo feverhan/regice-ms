@@ -19,6 +19,7 @@ class InventoryPage extends StatelessWidget {
     required this.onDelete,
     required this.onIncrement,
     required this.onDecrement,
+    required this.onBulkImport,
   });
 
   final List<InventoryItem> items;
@@ -34,6 +35,7 @@ class InventoryPage extends StatelessWidget {
   final ValueChanged<InventoryItem> onDelete;
   final ValueChanged<InventoryItem> onIncrement;
   final ValueChanged<InventoryItem> onDecrement;
+  final VoidCallback onBulkImport;
 
   @override
   Widget build(BuildContext context) {
@@ -55,7 +57,18 @@ class InventoryPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('查找食材', style: theme.textTheme.titleMedium),
+                Row(
+                  children: [
+                    Expanded(
+                        child:
+                            Text('查找食材', style: theme.textTheme.titleMedium)),
+                    IconButton.filledTonal(
+                      onPressed: onBulkImport,
+                      icon: const Icon(Icons.auto_awesome_rounded),
+                      tooltip: 'AI 识别清单',
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 10),
                 TextField(
                   controller: searchController,
@@ -120,37 +133,97 @@ class InventoryPage extends StatelessWidget {
                   itemCount: items.length,
                   itemBuilder: (context, index) {
                     final item = items[index];
-                    final stepLabel = '${InventoryItem.formatNumber(item.defaultStep)}${item.unit}';
+                    final stepLabel =
+                        '${InventoryItem.formatNumber(item.defaultStep)}${item.unit}';
                     return Card(
-                      margin: EdgeInsets.only(bottom: gap),
+                      margin: EdgeInsets.only(bottom: gap * 0.65),
                       child: Padding(
-                        padding: EdgeInsets.all(AppLayout.cardPadding(context)),
+                        padding: EdgeInsets.symmetric(
+                          horizontal: AppLayout.cardPadding(context),
+                          vertical: AppLayout.isPhone(context) ? 10 : 12,
+                        ),
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(
-                              item.name,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontSize: AppLayout.itemTitleSize(context),
-                              ),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        item.name,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.titleMedium
+                                            ?.copyWith(
+                                          fontSize:
+                                              AppLayout.itemTitleSize(context) -
+                                                  1,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 3),
+                                      Text(
+                                        '${item.category} · ${item.quantityLabel}',
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: const Color(0xFF2F4F40),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                _TinyIconButton(
+                                  icon: Icons.edit_outlined,
+                                  tooltip: '编辑',
+                                  onPressed: () => onEdit(item),
+                                ),
+                                _TinyIconButton(
+                                  icon: Icons.delete_outline,
+                                  tooltip: '删除',
+                                  onPressed: () => onDelete(item),
+                                ),
+                              ],
                             ),
-                            const SizedBox(height: 6),
-                            Text('${item.category} · ${item.quantityLabel}'),
-                            const SizedBox(height: 6),
-                            Text(item.statusDescription),
+                            const SizedBox(height: 5),
+                            Text(
+                              item.statusDescription,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: theme.textTheme.bodySmall,
+                            ),
                             if (item.note.isNotEmpty) ...[
-                              const SizedBox(height: 6),
-                              Text(item.note, style: theme.textTheme.bodyMedium),
+                              const SizedBox(height: 4),
+                              Text(
+                                item.note,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall,
+                              ),
                             ],
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 8),
                             Wrap(
                               spacing: 8,
                               runSpacing: 8,
                               children: [
-                                OutlinedButton(onPressed: () => onDecrement(item), child: Text('减少 $stepLabel')),
-                                OutlinedButton(onPressed: () => onIncrement(item), child: Text('补充 $stepLabel')),
-                                TextButton(onPressed: () => onEdit(item), child: const Text('编辑')),
-                                TextButton(onPressed: () => onDelete(item), child: const Text('删除')),
+                                _CompactQuantityButton(
+                                  icon: Icons.remove_rounded,
+                                  label: stepLabel,
+                                  tooltip: '减少 $stepLabel',
+                                  onPressed: () => onDecrement(item),
+                                ),
+                                _CompactQuantityButton(
+                                  icon: Icons.add_rounded,
+                                  label: stepLabel,
+                                  tooltip: '补充 $stepLabel',
+                                  onPressed: () => onIncrement(item),
+                                ),
                               ],
                             ),
                           ],
@@ -161,6 +234,71 @@ class InventoryPage extends StatelessWidget {
                 ),
         ),
       ],
+    );
+  }
+}
+
+class _TinyIconButton extends StatelessWidget {
+  const _TinyIconButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      tooltip: tooltip,
+      visualDensity: VisualDensity.compact,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
+      style: IconButton.styleFrom(
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        foregroundColor: const Color(0xFF526158),
+      ),
+    );
+  }
+}
+
+class _CompactQuantityButton extends StatelessWidget {
+  const _CompactQuantityButton({
+    required this.icon,
+    required this.label,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final String label;
+  final String tooltip;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: OutlinedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 16),
+        label: Text(label),
+        style: OutlinedButton.styleFrom(
+          minimumSize: const Size(0, 32),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+          padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 0),
+          textStyle: Theme.of(context).textTheme.labelMedium?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          side: const BorderSide(color: Color(0xFFD8D0C4)),
+        ),
+      ),
     );
   }
 }

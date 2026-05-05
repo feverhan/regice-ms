@@ -83,7 +83,8 @@ class _HomePageState extends State<HomePage> {
           item.name.toLowerCase().contains(query) ||
           item.category.toLowerCase().contains(query) ||
           item.note.toLowerCase().contains(query);
-      final matchesCategory = _categoryFilter.isEmpty || item.category == _categoryFilter;
+      final matchesCategory =
+          _categoryFilter.isEmpty || item.category == _categoryFilter;
       final matchesStatus = switch (_statusFilter) {
         'expired' => item.isExpired,
         'warning' => item.isExpiringSoon && !item.isExpired,
@@ -121,9 +122,12 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _showItemEditor([InventoryItem? item]) async {
-    final edited = await showDialog<InventoryItem>(
+    final edited = await showModalBottomSheet<InventoryItem>(
       context: context,
-      builder: (context) => ItemEditorDialog(item: item),
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ItemEditorSheet(item: item),
     );
     if (edited == null) {
       return;
@@ -174,7 +178,8 @@ class _HomePageState extends State<HomePage> {
     if (index < 0) {
       return;
     }
-    final next = (_items[index].quantity + delta).clamp(0, double.infinity).toDouble();
+    final next =
+        (_items[index].quantity + delta).clamp(0, double.infinity).toDouble();
     setState(() {
       _items[index] = _items[index].copyWith(quantity: next);
     });
@@ -272,13 +277,15 @@ class _HomePageState extends State<HomePage> {
     }
     await Navigator.of(context).push(
       PageRouteBuilder<void>(
-        pageBuilder: (context, animation, secondaryAnimation) => AiAssistantPage(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            AiAssistantPage(
           items: List<InventoryItem>.from(_items),
           settings: _settings,
           qwenService: _qwen,
         ),
         transitionsBuilder: (context, animation, secondaryAnimation, child) {
-          final curved = CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
+          final curved =
+              CurvedAnimation(parent: animation, curve: Curves.easeOutCubic);
           return FadeTransition(
             opacity: curved,
             child: SlideTransition(
@@ -316,12 +323,14 @@ class _HomePageState extends State<HomePage> {
       builder: (context) => const Center(child: CircularProgressIndicator()),
     );
     try {
-      final imported = await _qwen.bulkImport(rawText, _settings);
+      final imported =
+          await _qwen.bulkImport(rawText, _settings, currentItems: _items);
       if (!mounted) {
         return;
       }
+      final result = _mergeImportedItems(imported);
       setState(() {
-        _items = [...imported, ..._items];
+        _items = result.items;
       });
       await _saveItems();
       if (!mounted) {
@@ -331,10 +340,8 @@ class _HomePageState extends State<HomePage> {
       await showDialog<void>(
         context: context,
         builder: (context) => OutputDialog(
-          title: '已识别以下食材',
-          content: imported
-              .map((item) => '${item.name}\n${item.quantityLabel} · ${item.category}')
-              .join('\n\n'),
+          title: '库存已更新',
+          content: _buildImportSummary(result),
         ),
       );
     } catch (error) {
@@ -346,13 +353,87 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
+  _BulkImportResult _mergeImportedItems(List<InventoryItem> imported) {
+    final merged = List<InventoryItem>.from(_items);
+    final added = <InventoryItem>[];
+    final updated = <InventoryItem>[];
+
+    for (final item in imported) {
+      final index =
+          merged.indexWhere((entry) => _sameInventoryEntry(entry, item));
+      if (index < 0) {
+        merged.insert(0, item);
+        added.add(item);
+        continue;
+      }
+
+      final current = merged[index];
+      final next = current.copyWith(
+        quantity: current.quantity + item.quantity,
+        category: item.category == '其他' ? current.category : item.category,
+        expiry: item.expiry.isEmpty ? current.expiry : item.expiry,
+        minQuantity:
+            item.minQuantity > 0 ? item.minQuantity : current.minQuantity,
+        note: _mergeNotes(current.note, item.note),
+      );
+      merged[index] = next;
+      updated.add(next);
+    }
+
+    merged.sort((a, b) => b.addedDate.compareTo(a.addedDate));
+    return _BulkImportResult(items: merged, added: added, updated: updated);
+  }
+
+  bool _sameInventoryEntry(InventoryItem a, InventoryItem b) {
+    return _normalizeInventoryKey(a.name) == _normalizeInventoryKey(b.name) &&
+        _normalizeInventoryKey(a.unit) == _normalizeInventoryKey(b.unit);
+  }
+
+  String _normalizeInventoryKey(String value) {
+    return value.trim().toLowerCase().replaceAll(RegExp(r'\s+'), '');
+  }
+
+  String _mergeNotes(String current, String incoming) {
+    final cleanCurrent = current.trim();
+    final cleanIncoming = incoming.trim();
+    if (cleanIncoming.isEmpty || cleanCurrent.contains(cleanIncoming)) {
+      return cleanCurrent;
+    }
+    if (cleanCurrent.isEmpty) {
+      return cleanIncoming;
+    }
+    return '$cleanCurrent；$cleanIncoming';
+  }
+
+  String _buildImportSummary(_BulkImportResult result) {
+    final lines = <String>[
+      '新增 ${result.added.length} 项，更新 ${result.updated.length} 项。',
+    ];
+    if (result.added.isNotEmpty) {
+      lines
+        ..add('')
+        ..add('新增：')
+        ..addAll(result.added.map((item) =>
+            '${item.name} · ${item.quantityLabel} · ${item.category}'));
+    }
+    if (result.updated.isNotEmpty) {
+      lines
+        ..add('')
+        ..add('更新：')
+        ..addAll(result.updated
+            .map((item) => '${item.name} · 现在 ${item.quantityLabel}'));
+    }
+    return lines.join('\n');
+  }
+
   Future<void> _exportData() async {
     final file = await _store.exportItems(_items);
     _showSnack('补货清单已导出：${file.path}');
   }
 
   void _showSnack(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -371,18 +452,22 @@ class _HomePageState extends State<HomePage> {
               ),
               InventoryPage(
                 items: _filteredItems,
-                categories: {for (final item in _items) item.category}.toList()..sort(),
+                categories: {for (final item in _items) item.category}.toList()
+                  ..sort(),
                 searchController: _searchController,
                 sortKey: _sortKey,
                 statusFilter: _statusFilter,
                 categoryFilter: _categoryFilter,
                 onSortChanged: (value) => setState(() => _sortKey = value),
-                onStatusChanged: (value) => setState(() => _statusFilter = value),
-                onCategoryChanged: (value) => setState(() => _categoryFilter = value),
+                onStatusChanged: (value) =>
+                    setState(() => _statusFilter = value),
+                onCategoryChanged: (value) =>
+                    setState(() => _categoryFilter = value),
                 onEdit: _showItemEditor,
                 onDelete: _deleteItem,
                 onIncrement: (item) => _adjustQuantity(item, item.defaultStep),
                 onDecrement: (item) => _adjustQuantity(item, -item.defaultStep),
+                onBulkImport: _bulkImport,
               ),
               ShoppingPage(
                 shoppingItems: _stats.shoppingList,
@@ -418,11 +503,26 @@ class _HomePageState extends State<HomePage> {
         selectedIndex: _tabIndex,
         onDestinationSelected: (value) => setState(() => _tabIndex = value),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_outlined), label: '首页'),
-          NavigationDestination(icon: Icon(Icons.inventory_2_outlined), label: '库存'),
-          NavigationDestination(icon: Icon(Icons.shopping_cart_outlined), label: '补货'),
+          NavigationDestination(
+              icon: Icon(Icons.dashboard_outlined), label: '首页'),
+          NavigationDestination(
+              icon: Icon(Icons.inventory_2_outlined), label: '库存'),
+          NavigationDestination(
+              icon: Icon(Icons.shopping_cart_outlined), label: '补货'),
         ],
       ),
     );
   }
+}
+
+class _BulkImportResult {
+  const _BulkImportResult({
+    required this.items,
+    required this.added,
+    required this.updated,
+  });
+
+  final List<InventoryItem> items;
+  final List<InventoryItem> added;
+  final List<InventoryItem> updated;
 }

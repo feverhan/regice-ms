@@ -28,10 +28,15 @@ class InventoryItem {
           : json['id'].toString(),
       name: (json['name'] ?? '').toString().trim(),
       quantity: _parseDouble(json['quantity']),
-      unit: ((json['unit'] ?? '件').toString().trim().isEmpty ? '件' : json['unit'].toString().trim()),
-      category: ((json['category'] ?? '其他').toString().trim().isEmpty ? '其他' : json['category'].toString().trim()),
+      unit: ((json['unit'] ?? '件').toString().trim().isEmpty
+          ? '件'
+          : json['unit'].toString().trim()),
+      category: ((json['category'] ?? '其他').toString().trim().isEmpty
+          ? '其他'
+          : json['category'].toString().trim()),
       expiry: (json['expiry'] ?? '').toString().trim(),
-      addedDate: DateTime.tryParse((json['addedDate'] ?? '').toString()) ?? DateTime.now(),
+      addedDate: DateTime.tryParse((json['addedDate'] ?? '').toString()) ??
+          DateTime.now(),
       minQuantity: _parseDouble(json['minQuantity']),
       note: (json['note'] ?? '').toString().trim(),
     );
@@ -76,17 +81,26 @@ class InventoryItem {
     );
   }
 
-  InventoryItem copyWith({double? quantity}) {
+  InventoryItem copyWith({
+    String? name,
+    double? quantity,
+    String? unit,
+    String? category,
+    String? expiry,
+    DateTime? addedDate,
+    double? minQuantity,
+    String? note,
+  }) {
     return InventoryItem(
       id: id,
-      name: name,
+      name: name ?? this.name,
       quantity: quantity ?? this.quantity,
-      unit: unit,
-      category: category,
-      expiry: expiry,
-      addedDate: addedDate,
-      minQuantity: minQuantity,
-      note: note,
+      unit: unit ?? this.unit,
+      category: category ?? this.category,
+      expiry: expiry ?? this.expiry,
+      addedDate: addedDate ?? this.addedDate,
+      minQuantity: minQuantity ?? this.minQuantity,
+      note: note ?? this.note,
     );
   }
 
@@ -118,13 +132,17 @@ class InventoryItem {
     };
   }
 
-  DateTime get expiryOrMax => DateTime.tryParse(expiry) ?? DateTime(9999, 12, 31);
+  DateTime get expiryOrMax =>
+      DateTime.tryParse(expiry) ?? DateTime(9999, 12, 31);
 
   bool get isExpired =>
-      expiry.isNotEmpty && expiryOrMax.isBefore(DateTime.now().subtract(const Duration(days: 1)));
+      expiry.isNotEmpty &&
+      expiryOrMax.isBefore(DateTime.now().subtract(const Duration(days: 1)));
 
   bool get isExpiringSoon =>
-      expiry.isNotEmpty && !isExpired && expiryOrMax.difference(DateTime.now()).inDays <= 3;
+      expiry.isNotEmpty &&
+      !isExpired &&
+      expiryOrMax.difference(DateTime.now()).inDays <= 3;
 
   bool get isLowStock => minQuantity > 0 && quantity <= minQuantity;
 
